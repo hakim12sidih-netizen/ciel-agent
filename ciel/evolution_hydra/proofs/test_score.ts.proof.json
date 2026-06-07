@@ -1,0 +1,10 @@
+{
+  "isSafe": true,
+  "errors": [],
+  "score": 1,
+  "metadata": {
+    "complexity": 0,
+    "forbiddenPatterns": [],
+    "potentialInfiniteLoops": []
+  }
+}

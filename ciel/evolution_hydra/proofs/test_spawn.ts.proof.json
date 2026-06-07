@@ -1,0 +1,14 @@
+{
+  "isSafe": false,
+  "errors": [
+    "FORBIDDEN API: Use of spawn is restricted by AEGIS protocol."
+  ],
+  "score": 1,
+  "metadata": {
+    "complexity": 0,
+    "forbiddenPatterns": [
+      "spawn"
+    ],
+    "potentialInfiniteLoops": []
+  }
+}

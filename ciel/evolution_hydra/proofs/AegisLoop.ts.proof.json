@@ -1,0 +1,14 @@
+{
+  "isSafe": false,
+  "errors": [
+    "POTENTIAL INFINITE LOOP: while(true) detected without break condition."
+  ],
+  "score": 1,
+  "metadata": {
+    "complexity": 2,
+    "forbiddenPatterns": [],
+    "potentialInfiniteLoops": [
+      "while(true)"
+    ]
+  }
+}

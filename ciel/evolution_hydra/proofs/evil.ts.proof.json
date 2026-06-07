@@ -1,0 +1,14 @@
+{
+  "isSafe": false,
+  "errors": [
+    "FORBIDDEN API: Use of eval is restricted by AEGIS protocol."
+  ],
+  "score": 1,
+  "metadata": {
+    "complexity": 1,
+    "forbiddenPatterns": [
+      "eval"
+    ],
+    "potentialInfiniteLoops": []
+  }
+}
