@@ -1,0 +1,72 @@
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.installed.cfg
+MANIFEST
+
+# ── Virtual envs ──────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.pyenv/
+
+# ── Testing ───────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ── CIEL runtime data ─────────────────────────────────────
+data/*.db
+data/*.sqlite
+data/*.sqlite-journal
+data/snapshots/
+data/sessions/
+data/logs/
+data/cache/
+!data/.gitkeep
+!data/README.md
+
+# ── Secrets & keys ────────────────────────────────────────
+*.key
+*.pem
+*.p12
+*.pfx
+.ciel/identity/
+.ciel/secrets/
+.secrets/
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor backups ────────────────────────────────────────
+*.bak
+*.tmp
+
+# ── Worktrees / git ───────────────────────────────────────
+*.orig
+*.rej
+.git/
+.git.bak/
