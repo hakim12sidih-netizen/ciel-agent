@@ -1,5 +1,5 @@
 """
-Strate 5 — ŒIL DU MONDE : Perception Universelle (12 sens).
+Strate 6 — ŒIL DU MONDE : Perception Universelle (12 sens).
 
 Capteurs :
   1.  filesystem : inotify / watchdog
