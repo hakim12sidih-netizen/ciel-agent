@@ -14,6 +14,9 @@ from ciel.data_flywheel.core import DataFlywheel
 from ciel.economy.core import EconomyEngine
 from ciel.ethics.core import EthicsEngine
 from ciel.evolution.core import EvolutionEngine
+from ciel.evolution.metamorphic_core import MetamorphicCore
+from ciel.evolution.emergent_language import EmergentLanguage
+from ciel.evolution.titan import TitanEcosystem
 from ciel.forge.core import ForgeEngine
 from ciel.hermes.core import HermesEngine
 from ciel.interfaces.core import InterfacesEngine
@@ -53,7 +56,7 @@ class CIELState:
 
 
 class CIELBrain:
-    """CIELBrain — cortex unifié intégrant les 10 phases de CIEL v∞.3.
+    """CIELBrain — cortex unifié intégrant les 10 phases de CIEL v∞.4.
 
     Point d'entrée unique pour toutes les strates :
     Phase 0-2 : Core, Axiomes, Crypto, Kernel, Polyglot
@@ -65,6 +68,7 @@ class CIELBrain:
     Phase 8   : CIEL-LM (CoT, ToT, GoT, NTP, ReAct, STaR, RAP)
     Phase 9   : Économie, Conscience, Chronos, Logos
     Phase 10  : Neuro-Symbolique, Abstraction, Hybrid Reasoning
+    Phase 11  : Architectures Avancées (MetamorphicCore, EmergentLanguage, TitanEcosystem)
     """
 
     def __init__(self, name: str = "CIEL v∞.3") -> None:
@@ -166,7 +170,11 @@ class CIELBrain:
         self.load_module("security", SecurityEngine())
         self.load_module("skills", ForgeronEngine())
         self.load_module("swarm", SwarmEngine(peer_id=peer_id))
-        self.emit("brain.modules_loaded", count=25)
+        # Phase 11 — Architectures Avancées
+        self.load_module("metamorphic_core", MetamorphicCore())
+        self.load_module("emergent_language", EmergentLanguage())
+        self.load_module("titan", TitanEcosystem())
+        self.emit("brain.modules_loaded", count=28)
 
     def process(self, input_data: Any) -> Any:
         """Pipeline de traitement unifié à travers tous les modules."""
