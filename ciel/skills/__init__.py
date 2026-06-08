@@ -15,7 +15,27 @@ Strate 7 — FORGERON : Génération & Évolution des Skills.
   germination → incubation → conception → embryon → test virtuel
   → naissance → enfance → maturité → spécialisation → enseignement
   → fusion → transcendance
-
-Phase 0 : stubs alignés v∞.2. Implémentation Phase 3 (CIEL).
 """
 from __future__ import annotations
+
+from ciel.skills.core import (
+    SkillLevel,
+    SkillPhase,
+    Skill,
+    SkillRegistry,
+    SkillExecutor,
+    SkillGenerator,
+    SkillOptimizer,
+    ForgeronEngine,
+)
+
+__all__ = [
+    "SkillLevel",
+    "SkillPhase",
+    "Skill",
+    "SkillRegistry",
+    "SkillExecutor",
+    "SkillGenerator",
+    "SkillOptimizer",
+    "ForgeronEngine",
+]
