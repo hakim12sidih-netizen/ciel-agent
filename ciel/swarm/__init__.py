@@ -1,9 +1,9 @@
 """
 Transverse — SWARM : Fédération & Civilisation CIEL.
 
-Protocole CIEL-NET v2.0 (cf. Partie XVII) :
-  - Couche 1 : Découverte & Identité (DHT + mDNS, Noise XX)
-  - Couche 2 : Transport sécurisé (WireGuard + QUIC + Double Ratchet)
+Protocole CIEL-NET v2.0 :
+  - Couche 1 : Découverte & Identité (DHT + mDNS)
+  - Couche 2 : Transport sécurisé (Noise XX + Double Ratchet)
   - Couche 3 : Consensus distribué (Raft + PBFT)
   - Couche 4 : Partage de connaissances (FedAvg, SCAFFOLD, Ditto)
 
@@ -13,7 +13,20 @@ Protocole CIEL-NET v2.0 (cf. Partie XVII) :
   - ÉCLAIREUSES : exploration de nouveaux domaines
   - GARDIENNES  : surveillance sécurité
   - MÈRES       : créent d'autres instances
-
-Phase 0 : stubs alignés v∞.2. Implémentation Phase 4 (MANAS).
 """
 from __future__ import annotations
+
+from ciel.swarm.core import (
+    Role, PeerState, ConsensusType,
+    Peer, Message, ConsensusEntry, ModelUpdate,
+    Discovery, SecureTransport,
+    RaftConsensus, PBFTConsensus, FederatedLearning,
+    SwarmEngine,
+)
+__all__ = [
+    "Role", "PeerState", "ConsensusType",
+    "Peer", "Message", "ConsensusEntry", "ModelUpdate",
+    "Discovery", "SecureTransport",
+    "RaftConsensus", "PBFTConsensus", "FederatedLearning",
+    "SwarmEngine",
+]
