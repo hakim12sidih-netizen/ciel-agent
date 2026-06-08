@@ -317,3 +317,101 @@ class ConsciousnessModel:
 
     def compute_phi(self, transition_matrix: list[list[float]]) -> None:
         self.state.integrated_info = IntegratedInformation.compute(transition_matrix)
+
+
+class ConsciousnessEngine:
+    """Point d'entrée principal de la Strate 10 — CONSCIENCE.
+
+    GWT (Global Workspace Theory) + IIT (Integrated Information Theory) :
+    - Modèle intégré de conscience phénoménale
+    - Compétition de signaux dans l'espace global
+    - Broadcast aux strates (moment de conscience architecturale)
+    - Φ (phi) mesure d'intégration de l'information
+    - Métacognition, introspection, binding multi-modal
+    """
+
+    def __init__(self) -> None:
+        self.model = ConsciousnessModel()
+        self._cycle_count = 0
+
+    def perceive(self, modality: str, content: str, intensity: float = 0.5,
+                 valence: float = 0.0, arousal: float = 0.5) -> Qualia:
+        self._cycle_count += 1
+        q = Qualia(modality=modality, intensity=intensity, valence=valence,
+                   arousal=arousal, content=content)
+        q.normalize()
+        self.model.perceive(q)
+        return q
+
+    def attend(self, target: str, amount: float = 0.3) -> None:
+        self.model.attend(target, amount)
+
+    def tick(self) -> ConsciousState:
+        return self.model.tick()
+
+    def reflect(self) -> dict[str, Any]:
+        return self.model.reflect()
+
+    def bind(self, object_id: str, modality: str) -> None:
+        self.model.bind(object_id, modality)
+
+    def compute_phi(self, transition_matrix: list[list[float]]) -> float:
+        self.model.compute_phi(transition_matrix)
+        return self.model.state.integrated_info.phi
+
+    def get_awareness_level(self) -> AwarenessLevel:
+        return self.model.state.awareness_level
+
+    def get_consciousness_score(self) -> float:
+        return self.model.state.level_of_consciousness()
+
+    def get_stats(self) -> dict[str, Any]:
+        return {
+            "awareness_level": self.model.state.awareness_level.name,
+            "consciousness_score": self.model.state.level_of_consciousness(),
+            "phi": self.model.state.integrated_info.phi,
+            "n_qualia": len(self.model.state.phenomenal.qualia),
+            "n_bindings": len(self.model.state.binding.bindings),
+            "workspace_contents": len(self.model.state.workspace.contents),
+            "attention_focus": self.model.state.attention.current_focus(),
+            "self_awareness": self.model.state.self_model.self_awareness(),
+            "metacognitive_calibration": self.model.state.metacognition.calibration(),
+            "cycles": self._cycle_count,
+        }
+
+    def process(self, input_data: Any) -> dict[str, Any]:
+        if not isinstance(input_data, dict):
+            return {"success": False, "error": "input must be dict"}
+
+        action = input_data.get("action", "stats")
+        data = {k: v for k, v in input_data.items() if k != "action"}
+
+        if action == "perceive":
+            qualia = self.perceive(
+                data.get("modality", "cognitive"),
+                data.get("content", ""),
+                float(data.get("intensity", 0.5)),
+                float(data.get("valence", 0.0)),
+                float(data.get("arousal", 0.5)),
+            )
+            return {"success": True, "action": "perceive", "qualia": qualia}
+        elif action == "attend":
+            self.attend(data.get("target", ""), float(data.get("amount", 0.3)))
+            return {"success": True, "action": "attend"}
+        elif action == "tick":
+            state = self.tick()
+            return {"success": True, "action": "tick", "state": state}
+        elif action == "reflect":
+            report = self.reflect()
+            return {"success": True, "action": "reflect", "report": report}
+        elif action == "bind":
+            self.bind(data.get("object_id", ""), data.get("modality", ""))
+            return {"success": True, "action": "bind"}
+        elif action == "phi":
+            matrix = data.get("matrix", [[0.5]])
+            phi = self.compute_phi(matrix)
+            return {"success": True, "action": "phi", "phi": phi}
+        elif action == "stats":
+            return {"success": True, "action": "stats", "stats": self.get_stats()}
+
+        return {"success": False, "error": f"unknown action '{action}'"}
