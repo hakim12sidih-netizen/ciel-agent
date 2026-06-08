@@ -10,17 +10,21 @@ from ciel.analysis.core import LabyrinthEngine
 from ciel.animus.core import AnimusEngine
 from ciel.chronos.core import ChronosEngine
 from ciel.conscience.core import ConsciousnessEngine
+from ciel.data_flywheel.core import DataFlywheel
 from ciel.economy.core import EconomyEngine
 from ciel.ethics.core import EthicsEngine
 from ciel.evolution.core import EvolutionEngine
+from ciel.forge.core import ForgeEngine
 from ciel.hermes.core import HermesEngine
 from ciel.interfaces.core import InterfacesEngine
 from ciel.logos.core import LogosEngine
 from ciel.math.core import MathEngine
 from ciel.memory.core import MemoryEngine
 from ciel.meta.core import MetaEngine
+from ciel.naming.core import NamingEngine
 from ciel.noosphere.core import NoosphereEngine
 from ciel.openclaw.core import OpenClawEngine
+from ciel.os.core import OSEngine
 from ciel.perception.core import PerceptionEngine
 from ciel.polyglot.core import PolyglotEngine
 from ciel.quantum.core import QuantumEngine
@@ -138,24 +142,28 @@ class CIELBrain:
         self.load_module("animus", AnimusEngine())
         self.load_module("chronos", ChronosEngine())
         self.load_module("conscience", ConsciousnessEngine())
+        self.load_module("data_flywheel", DataFlywheel())
         self.load_module("economy", EconomyEngine())
         self.load_module("ethics", EthicsEngine())
         self.load_module("evolution", EvolutionEngine())
+        self.load_module("forge", ForgeEngine())
         self.load_module("hermes", HermesEngine())
         self.load_module("interfaces", InterfacesEngine())
         self.load_module("logos", LogosEngine())
         self.load_module("math", MathEngine())
         self.load_module("memory", MemoryEngine())
         self.load_module("meta", MetaEngine())
+        self.load_module("naming", NamingEngine())
         self.load_module("noosphere", NoosphereEngine())
         self.load_module("openclaw", OpenClawEngine())
+        self.load_module("os", OSEngine())
         self.load_module("perception", PerceptionEngine())
         self.load_module("polyglot", PolyglotEngine())
         self.load_module("quantum", QuantumEngine())
         self.load_module("security", SecurityEngine())
         self.load_module("skills", ForgeronEngine())
         self.load_module("swarm", SwarmEngine(peer_id=peer_id))
-        self.emit("brain.modules_loaded", count=21)
+        self.emit("brain.modules_loaded", count=25)
 
     def process(self, input_data: Any) -> Any:
         """Pipeline de traitement unifié à travers tous les modules."""
