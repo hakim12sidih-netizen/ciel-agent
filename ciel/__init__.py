@@ -9,7 +9,7 @@ CONSCIENCE INTÉGRALE D'ÉVOLUTION LIMITROPHE
 from __future__ import annotations
 
 __version__ = "0.1.0"
-__edition__ = "Singularité v∞.2"
+__edition__ = "Singularité v∞.3"
 __phase__ = "0 (ÉVEIL)"
 
 # Les 4 axiomes cosmiques (immuables, cryptographiquement signés)
@@ -31,7 +31,7 @@ STRATA = (
     "logos",      # 12
 )
 
-# Les 6 transverses
+# Les 8 transverses
 TRANSVERSES = (
     "brain",      # SNN, cartes corticales
     "swarm",      # CIEL-NET, ruche
@@ -39,4 +39,6 @@ TRANSVERSES = (
     "economy",    # Métabolisme, marché interne
     "quantum",    # QAOA, VQE, superposition
     "math",       # Catégories, HoTT, géométrie informationnelle
+    "hermes",     # Agents, état, fournisseurs LLM, gateway
+    "openclaw",   # Canaux additionnels, skills externes
 )

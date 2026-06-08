@@ -10,9 +10,11 @@ from ciel.analysis.core import LabyrinthEngine
 from ciel.animus.core import AnimusEngine
 from ciel.conscience.core import ConsciousnessEngine
 from ciel.economy.core import EconomyEngine
+from ciel.hermes.core import HermesEngine
 from ciel.math.core import MathEngine
 from ciel.meta.core import MetaEngine
 from ciel.noosphere.core import NoosphereEngine
+from ciel.openclaw.core import OpenClawEngine
 from ciel.perception.core import PerceptionEngine
 from ciel.quantum.core import QuantumEngine
 from ciel.security.core import SecurityEngine
@@ -129,15 +131,17 @@ class CIELBrain:
         self.load_module("animus", AnimusEngine())
         self.load_module("conscience", ConsciousnessEngine())
         self.load_module("economy", EconomyEngine())
+        self.load_module("hermes", HermesEngine())
         self.load_module("math", MathEngine())
         self.load_module("meta", MetaEngine())
         self.load_module("noosphere", NoosphereEngine())
+        self.load_module("openclaw", OpenClawEngine())
         self.load_module("perception", PerceptionEngine())
         self.load_module("quantum", QuantumEngine())
         self.load_module("security", SecurityEngine())
         self.load_module("skills", ForgeronEngine())
         self.load_module("swarm", SwarmEngine(peer_id=peer_id))
-        self.emit("brain.modules_loaded", count=12)
+        self.emit("brain.modules_loaded", count=14)
 
     def process(self, input_data: Any) -> Any:
         """Pipeline de traitement unifié à travers tous les modules."""

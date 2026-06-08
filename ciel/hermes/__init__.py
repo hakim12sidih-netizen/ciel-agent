@@ -1,21 +1,17 @@
 """
-CIEL v∞.3 — Hermes : Intégration de l'Agent Hermes.
+CIEL v∞.3 — Hermes : Pont multi-plateforme, état, fournisseurs LLM.
 
-Pont multi-plateforme, gestion d'état, fournisseurs LLM, et système de
-compétences adaptés de Hermes Agent pour CIEL.
+Engines : HermesEngine (process compatible CIELBrain).
 """
 from __future__ import annotations
 
-from ciel.hermes.gateway import (
-    PlatformAdapter, Message, MessageDirection, GatewayConfig,
-    TelegramAdapter, DiscordAdapter, SlackAdapter,
-)
+from ciel.hermes.gateway.base import PlatformAdapter, Message
 from ciel.hermes.hermes_state import HermesState, SessionRecord
-from ciel.hermes.providers import ProviderBase, LLMResponse
+from ciel.hermes.providers import ProviderBase, LLMResponse, Message as LLMMessage
+from ciel.hermes.core import HermesEngine
 
 __all__ = [
-    "PlatformAdapter", "Message", "MessageDirection", "GatewayConfig",
-    "TelegramAdapter", "DiscordAdapter", "SlackAdapter",
-    "HermesState", "SessionRecord",
-    "ProviderBase", "LLMResponse",
+    "PlatformAdapter", "Message", "HermesState", "SessionRecord",
+    "ProviderBase", "LLMResponse", "LLMMessage",
+    "HermesEngine",
 ]

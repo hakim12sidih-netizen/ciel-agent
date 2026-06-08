@@ -61,7 +61,7 @@ def test_ciel_root_constants() -> None:
     assert "ÉVEIL" in ciel.__phase__
     assert set(ciel.AXIOMS) == {"α", "β", "γ", "δ"}
     assert len(ciel.STRATA) == 12
-    assert len(ciel.TRANSVERSES) == 6
+    assert len(ciel.TRANSVERSES) == 8
 
 
 def test_strata_ordering_matches_vinfini2() -> None:
@@ -84,5 +84,5 @@ def test_strata_ordering_matches_vinfini2() -> None:
 def test_transverses_complete() -> None:
     """Les 6 transverses sont définies."""
     import ciel
-    expected = {"brain", "swarm", "security", "economy", "quantum", "math"}
+    expected = {"brain", "swarm", "security", "economy", "quantum", "math", "hermes", "openclaw"}
     assert set(ciel.TRANSVERSES) == expected

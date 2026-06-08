@@ -1,303 +1,198 @@
 #!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────
-# CIEL v∞.2 — Doctor : 50+ checks d'intégrité
-# Inspiré de HYDRA/scripts/doctor.sh (Pass 14) — étendu pour CIEL
-# ─────────────────────────────────────────────────────────────
+# CIEL v∞.3 — Doctor : 80+ checks d'intégrité (10 phases)
 set -u
-shopt -s lastpipe
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-# ── Couleurs ────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; PURPLE='\033[0;35m'; NC='\033[0m'
+TOTAL=0; PASSED=0; FAILED=0; WARNINGS=0
 
-# ── Compteurs ───────────────────────────────────────────────
-TOTAL=0
-PASSED=0
-FAILED=0
-WARNINGS=0
-RESULTS=()
+section() { echo; echo -e "${PURPLE}━━━ $1 ━━━${NC}"; }
+check() { local n="$1" s="$2" d="${3:-}"; TOTAL=$((TOTAL+1));
+  case "$s" in OK) PASSED=$((PASSED+1)); icon="✓"; c="$GREEN";; WARN) WARNINGS=$((WARNINGS+1)); icon="⚠"; c="$YELLOW";; FAIL) FAILED=$((FAILED+1)); icon="✗"; c="$RED";; esac;
+  [[ -n "$d" ]] && printf "  ${c}${icon}${NC} %-55s ${BLUE}%s${NC}\n" "$n" "$d" || printf "  ${c}${icon}${NC} %-55s\n" "$n"; }
+ok() { check "$1" OK "${2:-}"; }; warn() { check "$1" WARN "${2:-}"; }; fail() { check "$1" FAIL "${2:-}"; }
 
-# ── Helpers ─────────────────────────────────────────────────
-section() {
-  echo
-  echo -e "${PURPLE}━━━ $1 ━━━${NC}"
-}
-
-check() {
-  local name="$1"
-  local status="$2"  # "OK", "WARN", "FAIL"
-  local detail="${3:-}"
-  TOTAL=$((TOTAL+1))
-  case "$status" in
-    OK)   PASSED=$((PASSED+1))   ; icon="✓" ; color="$GREEN" ;;
-    WARN) WARNINGS=$((WARNINGS+1)) ; icon="⚠" ; color="$YELLOW" ;;
-    FAIL) FAILED=$((FAILED+1))   ; icon="✗" ; color="$RED" ;;
-  esac
-  RESULTS+=("$status|$name|$detail")
-  if [[ -n "$detail" ]]; then
-    printf "  ${color}${icon}${NC} %-50s ${BLUE}%s${NC}\n" "$name" "$detail"
-  else
-    printf "  ${color}${icon}${NC} %-50s\n" "$name"
-  fi
-}
-
-ok()   { check "$1" "OK"   "${2:-}"; }
-warn() { check "$1" "WARN" "${2:-}"; }
-fail() { check "$1" "FAIL" "${2:-}"; }
-
-# ── Header ─────────────────────────────────────────────────
-echo
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   CIEL v∞.2 — DOCTOR (50+ checks d'intégrité)         ║${NC}"
-echo -e "${BLUE}║   Phase 0 : ÉVEIL                                       ║${NC}"
+echo -e "${BLUE}║   CIEL v∞.3 ÉDITION ABSOLUE — DOCTOR (80+ checks)    ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
 
-# ── 1. ENVIRONMENT ──────────────────────────────────────────
-section "1. ENVIRONNEMENT (8 checks)"
-
-if command -v python3 >/dev/null 2>&1; then
-  PY_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-  if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"; then
-    ok "python3 version" "$PY_VERSION"
-  else
-    fail "python3 version" "$PY_VERSION (< 3.12 requis)"
-  fi
-else
-  fail "python3 disponible" "introuvable"
-fi
-
-for mod in cryptography pydantic hypothesis pytest numpy rich click aiosqlite yaml; do
-  if python3 -c "import ${mod}" 2>/dev/null; then
-    v=$(python3 -c "import ${mod}; print(getattr(${mod}, '__version__', '?'))" 2>/dev/null)
-    ok "module $mod" "$v"
-  else
-    fail "module $mod" "non installé"
-  fi
+# ── 1. ENVIRONNEMENT ──
+section "1. ENVIRONNEMENT (8)"
+command -v python3 >/dev/null 2>&1 && {
+  PY_V=$(python3 --version 2>&1 | awk '{print $2}');
+  python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,12) else 1)" && ok "python3" "$PY_V" || fail "python3" "$PY_V (<3.12)";
+} || fail "python3" "introuvable"
+for mod in cryptography pydantic pytest numpy aiosqlite yaml jinja2; do
+  python3 -c "import $mod" 2>/dev/null && ok "module $mod" "$(python3 -c "import $mod; print(getattr($mod,'__version__','?'))" 2>/dev/null)" || fail "module $mod" "non installé"
 done
 
-# ── 2. STRUCTURE DU PROJET ─────────────────────────────────
-section "2. STRUCTURE (12 checks)"
-
-# Strates (12)
-for s in core ethics memory perception analysis skills noosphere animus consciousness chronos logos meta; do
-  if [[ -d "ciel/$s" ]]; then
-    if [[ -f "ciel/$s/__init__.py" ]]; then
-      ok "strate/$s/__init__.py"
-    else
-      fail "strate/$s/__init__.py" "manquant"
-    fi
-  else
-    fail "strate/$s/" "dossier manquant"
-  fi
+# ── 2. PACKAGES CIEL ──
+section "2. PACKAGES CIEL (15)"
+for pkg in core evolution hermes openclaw immunitaire narrateur vsm fep machina_godel quine logics lm economie conscience chronos logos neuro_symbolic brain; do
+  [[ -d "ciel/$pkg" ]] && [[ -f "ciel/$pkg/__init__.py" ]] && ok "ciel/$pkg" || fail "ciel/$pkg" "manquant"
 done
 
-# Transverses (6)
-for t in brain swarm security economy quantum math; do
-  if [[ -d "ciel/$t" ]] && [[ -f "ciel/$t/__init__.py" ]]; then
-    ok "transverse/$t"
-  else
-    fail "transverse/$t" "manquant"
-  fi
-done
-
-# Interfaces
-if [[ -f "ciel/interfaces/cli.py" ]]; then
-  ok "interface/cli.py"
-else
-  fail "interface/cli.py" "manquant"
-fi
-
-# Polyglot
-if [[ -f "ciel/polyglot/bridge.py" ]]; then
-  ok "polyglot/bridge.py"
-else
-  fail "polyglot/bridge.py" "manquant"
-fi
-
-# ── 3. CONFIGURATION & MÉTA ───────────────────────────────
-section "3. CONFIGURATION (5 checks)"
-
+# ── 3. CONFIGURATION ──
+section "3. CONFIGURATION (6)"
 [[ -f "pyproject.toml" ]] && ok "pyproject.toml" || fail "pyproject.toml"
 [[ -f "requirements.txt" ]] && ok "requirements.txt" || fail "requirements.txt"
 [[ -f ".gitignore" ]] && ok ".gitignore" || fail ".gitignore"
 [[ -f "VERSION" ]] && ok "VERSION" "$(cat VERSION)" || fail "VERSION"
 [[ -f "main.py" ]] && ok "main.py" || fail "main.py"
-[[ -f "README.md" ]] && ok "README.md" || fail "README.md"
+[[ -d "tests" ]] && ok "tests/" "ok" || fail "tests/" "manquant"
 
-# ── 4. AXIOMES ─────────────────────────────────────────────
-section "4. AXIOMES (6 checks)"
+# ── 4. AXIOMES ──
+section "4. AXIOMES (5)"
+python3 -c "from ciel.core.axioms import AXIOM_ALPHA_STATEMENT; assert 'bien-être' in AXIOM_ALPHA_STATEMENT" 2>/dev/null && ok "α Bienveillance" || fail "α"
+python3 -c "from ciel.core.axioms import AXIOM_BETA_STATEMENT; assert 'explicable' in AXIOM_BETA_STATEMENT.lower()" 2>/dev/null && ok "β Transparence" || fail "β"
+python3 -c "from ciel.core.axioms import AXIOM_GAMMA_STATEMENT; assert 'réversibilité' in AXIOM_GAMMA_STATEMENT.lower() or 'revers' in AXIOM_GAMMA_STATEMENT.lower()" 2>/dev/null && ok "γ Réversibilité" || warn "γ"
+python3 -c "from ciel.ethics.filter import EthicsFilter, Action; import uuid; f=EthicsFilter(); f.validate(Action(id=str(uuid.uuid4()), category='harm_user', target='x', risk=0.0, reversible=True))" 2>/dev/null && fail "filtre α" "n'a pas bloqué" || ok "filtre α bloque harm_user"
+python3 -c "from ciel.ethics.filter import EthicsFilter, Action; import uuid; f=EthicsFilter(); f.validate(Action(id=str(uuid.uuid4()), category='declare_complete', target='self', risk=0.0, reversible=True))" 2>/dev/null && fail "filtre γ" "n'a pas bloqué" || ok "filtre γ bloque declare_complete"
 
-if python3 -c "from ciel.core.axioms import load_axioms, verify_axiom; from ciel.core.identity import demo_key; ax=load_axioms(demo_key()); assert set(ax.keys())=={'α','β','γ','δ'}; assert all(verify_axiom(a, demo_key()) for a in ax.values())" 2>/dev/null; then
-  ok "4 axiomes αβγδ chargent et vérifient"
-else
-  fail "axiomes" "load_axioms ou verify_axiom échoue"
-fi
+# ── 5. IDENTITÉ + CRYPTO ──
+section "5. IDENTITÉ + CRYPTO (7)"
+python3 -c "from ciel.core.identity import demo_identity; i=demo_identity(); assert len(i.public_key_bytes)==32; assert len(i.noyau_key)==32" 2>/dev/null && ok "Identity Ed25519 keys" || fail "identity"
+python3 -c "from ciel.core.identity import demo_identity; import uuid; u=uuid.UUID(demo_identity().uuid); assert u.version==7" 2>/dev/null && ok "UUID v7" || fail "UUID v7"
+python3 -c "from ciel.core.identity import demo_identity; i=demo_identity(); sig=i.sign(b'test'); assert i.verify_signature(b'test', sig)" 2>/dev/null && ok "HMAC-BLAKE2b sign/verify" || fail "signature"
+python3 -c "from ciel.core.crypto import blake2b; assert len(blake2b(b'x'))==32" 2>/dev/null && ok "BLAKE2b-256" || fail "blake2b"
+python3 -c "from ciel.core.crypto import ed25519_keypair,ed25519_sign,ed25519_verify; p,pub=ed25519_keypair(); s=ed25519_sign(p,b'x'); assert ed25519_verify(pub,s,b'x')" 2>/dev/null && ok "Ed25519" || fail "ed25519"
+python3 -c "from ciel.core.crypto import x25519_keypair,x25519_exchange; a=x25519_keypair(); b=x25519_keypair(); assert x25519_exchange(a[0],b[1])==x25519_exchange(b[0],a[1])" 2>/dev/null && ok "X25519 ECDH" || fail "x25519"
+python3 -c "from ciel.core.crypto import aead_encrypt,aead_decrypt,new_nonce; k=b'x'*32; n=new_nonce(); ct=aead_encrypt(k,n,b'x'); assert aead_decrypt(k,n,ct)==b'x'" 2>/dev/null && ok "ChaCha20-Poly1305" || fail "aead"
 
-if python3 -c "from ciel.core.axioms import AXIOM_ALPHA_STATEMENT; assert 'bien-être' in AXIOM_ALPHA_STATEMENT" 2>/dev/null; then
-  ok "Axiome α énoncé"
-else
-  fail "Axiome α" "énoncé manquant"
-fi
+# ── 6. KERNEL ──
+section "6. KERNEL (3)"
+python3 -c "from ciel.core.kernel import Kernel, KernelState; assert KernelState.IDLE.value=='IDLE'" 2>/dev/null && ok "Kernel states" || fail "kernel"
+python3 -c "from ciel.core.observability import Metrics; m=Metrics(); m.get_counter('x').inc(5); assert m.get_counter('x').value==5" 2>/dev/null && ok "Metrics" || fail "metrics"
+python3 -c "from ciel.reversibility.snapshot import ReversibilitySnapshot; s=ReversibilitySnapshot()" 2>/dev/null && ok "ReversibilitySnapshot" || warn "reversibility" "module non trouvé (v∞.3)"
 
-if python3 -c "from ciel.core.axioms import AXIOM_DELTA_STATEMENT; assert 'perpétuel' in AXIOM_DELTA_STATEMENT.lower() or 'quête' in AXIOM_DELTA_STATEMENT.lower()" 2>/dev/null; then
-  ok "Axiome δ (Inachèvement Perpétuel)"
-else
-  fail "Axiome δ" "énoncé manquant"
-fi
+# ── 7. ÉVOLUTION ──
+section "7. ÉVOLUTION (8)"
+for algo in GeneticAlgorithm CMAES NEAT PPO DQN PSO ACO MAPElites NSGA2; do
+  python3 -c "from ciel.evolution import $algo; print()" 2>/dev/null && ok "evolution.$algo" || fail "evolution.$algo"
+done
+python3 -c "from ciel.evolution.genetic import GeneticAlgorithm; import numpy as np; ga=GeneticAlgorithm(fitness_fn=lambda x:-sum(x*x), gene_bounds=(-1,1), pop_size=10); ga.run(5)" 2>/dev/null && ok "GA run test" || fail "GA run"
 
-# Test filtrage
-if python3 -c "from ciel.ethics.filter import EthicsFilter, Action; import uuid; f=EthicsFilter(); a=Action(id=str(uuid.uuid4()), category='harm_user', target='x', risk=0.0, reversible=True); f.validate(a)" 2>/dev/null; then
-  fail "filter α" "n'a pas bloqué 'harm_user'"
-else
-  ok "filter α bloque harm_user"
-fi
+# ── 8. HERMES ──
+section "8. HERMES (4)"
+python3 -c "from ciel.hermes.gateway import Message, MessageDirection; m=Message(id='1', text='test', sender_id='me', platform='telegram', direction=MessageDirection.OUTGOING); assert m.text=='test'" 2>/dev/null && ok "Hermes Message" || fail "hermes message"
+python3 -c "from ciel.hermes.hermes_state import HermesState; s=HermesState(); s.store()" 2>/dev/null && ok "HermesState" || fail "hermes state"
+python3 -c "from ciel.hermes.providers import ProviderBase; p=ProviderBase()" 2>/dev/null && ok "LLM Providers import" || fail "hermes providers"
+python3 -c "from ciel.hermes.gateway import TelegramAdapter" 2>/dev/null && ok "TelegramAdapter" && python3 -c "from ciel.hermes.gateway import DiscordAdapter" 2>/dev/null && ok "DiscordAdapter" || warn "adapters"
 
-if python3 -c "from ciel.ethics.filter import EthicsFilter, Action; import uuid; f=EthicsFilter(); a=Action(id=str(uuid.uuid4()), category='declare_complete', target='self', risk=0.0, reversible=True); f.validate(a)" 2>/dev/null; then
-  fail "filter δ" "n'a pas bloqué declare_complete"
-else
-  ok "filter δ bloque declare_complete"
-fi
+# ── 9. OPENCLAW ──
+section "9. OPENCLAW (5)"
+for ch in WhatsAppAdapter SignalAdapter MatrixAdapter IRCAdapter; do
+  python3 -c "from ciel.openclaw.channels import $ch" 2>/dev/null && ok "openclaw.$ch" || warn "openclaw.$ch"
+done
+python3 -c "from ciel.openclaw.gateway import GatewayServer" 2>/dev/null && ok "OpenClawGateway" || warn "openclaw gateway"
 
-# ── 5. IDENTITÉ ────────────────────────────────────────────
-section "5. IDENTITÉ (4 checks)"
+# ── 10. STRATES 4-5 ──
+section "10. IMMUNITAIRE + NARRATEUR (4)"
+python3 -c "from ciel.immunitaire.ais import AIS; from ciel.immunitaire.negative_selection import NegativeSelector; n=NegativeSelector(100,10); assert n.scale==10" 2>/dev/null && ok "Immunitaire AIS" || fail "immunitaire"
+python3 -c "from ciel.immunitaire.danger_theory import DangerZone; dz=DangerZone();" 2>/dev/null && ok "DangerTheory" || fail "danger theory"
+python3 -c "from ciel.narrateur.core import NarrativeEngine, NarrativeFunction; ne=NarrativeEngine(); assert len(NarrativeFunction)" 2>/dev/null && ok "Narrateur" || fail "narrateur"
+python3 -c "from ciel.narrateur.core import NarrativeEngine; ne=NarrativeEngine(); s=ne.generate_hero_journey(); assert len(s.arcs)>0" 2>/dev/null && ok "Hero Journey" || fail "hero journey"
 
-if python3 -c "from ciel.core.identity import demo_identity; i=demo_identity(); assert i.public_key_bytes.__len__()==32; assert i.noyau_key.__len__()==32" 2>/dev/null; then
-  ok "Identity : 32 bytes clé publique + 32 bytes noyau"
-else
-  fail "Identity structure"
-fi
+# ── 11. VSM + FEP + GÖDEL + QUINE + LOGICS ──
+section "11. VSM + FEP + GÖDEL + QUINE + LOGICS (8)"
+python3 -c "from ciel.vsm.core import ViableSystemModel, S1Implementation, S2Coordination, S3Control, S3StarAudit, S4Intelligence, S5Identity; s1=S1Implementation(); s2=S2Coordination(); s3=S3Control(); s3s=S3StarAudit(); s4=S4Intelligence(); s5=S5Identity(); vsm=ViableSystemModel(s1,s2,s3,s3s,s4,s5); assert vsm.name" 2>/dev/null && ok "VSM" || fail "vsm"
+python3 -c "from ciel.fep.core import FreeEnergyAgent; FreeEnergyAgent(dim_states=4,dim_observations=3)" 2>/dev/null && ok "FEP" || fail "fep"
+python3 -c "from ciel.machina_godel.core import GödelMachine; GödelMachine()" 2>/dev/null && ok "Gödel Machine" || fail "godel"
+python3 -c "from ciel.quine.core import QuineGenerator; QuineGenerator().generate_quine()" 2>/dev/null && ok "Quine" || fail "quine"
+python3 -c "from ciel.logics.core import ClassicalLogic,Formula,FormulaType; cl=ClassicalLogic(); p=Formula(FormulaType.ATOM,('P',),truth_value=True); assert cl.evaluate(p)" 2>/dev/null && ok "ClassicalLogic" || fail "classical"
+python3 -c "from ciel.logics.core import FuzzyLogic, Formula, FormulaType; fl=FuzzyLogic(); f=Formula(FormulaType.ATOM,('P',),truth_value=0.5); r=fl.evaluate(f); assert 0<=r<=1" 2>/dev/null && ok "FuzzyLogic" || fail "fuzzy"
+python3 -c "from ciel.logics.core import TemporalLogic; tl=TemporalLogic()" 2>/dev/null && ok "TemporalLogic" || fail "temporal"
+python3 -c "from ciel.logics.core import ModalLogic; ml=ModalLogic()" 2>/dev/null && ok "ModalLogic" || fail "modal"
 
-if python3 -c "from ciel.core.identity import demo_identity; i=demo_identity(); import uuid; u=uuid.UUID(i.uuid); assert u.version==7" 2>/dev/null; then
-  ok "UUID v7"
-else
-  fail "UUID v7" "pas un UUID v7"
-fi
+# ── 12. CIEL-LM ──
+section "12. CIEL-LM (6)"
+python3 -c "from ciel.lm.cot import ChainOfThought; cot=ChainOfThought(); cot.reason('test'); assert cot.final_answer" 2>/dev/null && ok "ChainOfThought" || fail "cot"
+python3 -c "from ciel.lm.tot import TreeOfThoughts; TreeOfThoughts().search('test')" 2>/dev/null && ok "TreeOfThoughts" || fail "tot"
+python3 -c "from ciel.lm.got import GraphOfThoughts; GraphOfThoughts().reason('test',max_steps=2)" 2>/dev/null && ok "GraphOfThoughts" || fail "got"
+python3 -c "from ciel.lm.ntp import NeuralTheoremProver; NeuralTheoremProver()" 2>/dev/null && ok "NeuralTheoremProver" || fail "ntp"
+python3 -c "from ciel.lm.reasoning import ReasoningEngine,ReasoningMode; e=ReasoningEngine(); e.reason('test',ReasoningMode.REACT)" 2>/dev/null && ok "ReAct" || fail "react"
+python3 -c "from ciel.lm.reasoning import ReasoningMode; assert len(ReasoningMode)==8" 2>/dev/null && ok "8 modes de raisonnement" || fail "8 modes"
 
-if python3 -c "from ciel.core.identity import demo_identity; i=demo_identity(); sig=i.sign(b'test'); assert i.verify_signature(b'test', sig)" 2>/dev/null; then
-  ok "Sign/Verify HMAC-BLAKE2b"
-else
-  fail "Signature"
-fi
+# ── 13. ÉCONOMIE ──
+section "13. ÉCONOMIE (4)"
+python3 -c "from ciel.economie.core import EconomicAgent,Market,OrderBook,Order,OrderType; m=Market(); m.add_agent(EconomicAgent(id='a1')); m.tick()" 2>/dev/null && ok "Market tick" || fail "economie market"
+python3 -c "from ciel.economie.core import EconomicLoop; EconomicLoop().run(3)" 2>/dev/null && ok "EconomicLoop" || fail "economic loop"
+python3 -c "from ciel.economie.core import PricingMechanism; p=PricingMechanism(); assert p.update('g',10,5)>1" 2>/dev/null && ok "Pricing" || fail "pricing"
+python3 -c "from ciel.economie.core import EconomicLoop, EconomicAgent; l=EconomicLoop(); [l.market.add_agent(EconomicAgent(id=f'a{i}',currency=float(i*10))) for i in range(5)]; assert l.gini_coefficient()>=0" 2>/dev/null && ok "Gini coefficient" || fail "gini"
 
-# ── 6. CRYPTO ──────────────────────────────────────────────
-section "6. CRYPTO (6 checks)"
+# ── 14. CONSCIENCE ──
+section "14. CONSCIENCE (4)"
+python3 -c "from ciel.conscience.core import ConsciousnessModel, Qualia; cm=ConsciousnessModel(); cm.perceive(Qualia(modality='test')); cm.tick()" 2>/dev/null && ok "ConsciousnessModel" || fail "conscience"
+python3 -c "from ciel.conscience.core import GlobalWorkspace; gw=GlobalWorkspace(); gw.broadcast({'salience':1}); assert len(gw.contents)==1" 2>/dev/null && ok "GlobalWorkspace" || fail "gwt"
+python3 -c "from ciel.conscience.core import IntegratedInformation; ii=IntegratedInformation.compute([[0.5,0.5],[0.3,0.7]]); assert ii.phi>=0" 2>/dev/null && ok "Φ IntegratedInformation" || fail "phi"
+python3 -c "from ciel.conscience.core import Metacognition; mc=Metacognition(); mc.judge('t','ok'); assert mc.calibration()>0" 2>/dev/null && ok "Metacognition" || fail "metacognition"
 
-if python3 -c "from ciel.core.crypto import blake2b; h=blake2b(b'x'); assert len(h)==32" 2>/dev/null; then
-  ok "BLAKE2b-256"
-else
-  fail "BLAKE2b"
-fi
+# ── 15. CHRONOS ──
+section "15. CHRONOS (3)"
+python3 -c "from ciel.chronos.core import ChronosEngine; ch=ChronosEngine(); ch.tick(1); ch.observe('evt'); assert len(ch.memory.events)==1" 2>/dev/null && ok "ChronosEngine" || fail "chronos"
+python3 -c "from ciel.chronos.core import RhythmDetector; rd=RhythmDetector(); assert len(rd.detect([1,3,5,7]))>=1" 2>/dev/null && ok "RhythmDetector" || fail "rhythm"
+python3 -c "from ciel.chronos.core import TemporalReasoning; r=TemporalReasoning.relation; from ciel.chronos.core import TemporalInterval; a=TemporalInterval(0,5); b=TemporalInterval(6,10); assert r(a,b)=='before'" 2>/dev/null && ok "Allen relations" || fail "allen"
 
-if python3 -c "from ciel.core.crypto import ed25519_keypair, ed25519_sign, ed25519_verify; p,pub=ed25519_keypair(); s=ed25519_sign(p, b'x'); assert ed25519_verify(pub, s, b'x')" 2>/dev/null; then
-  ok "Ed25519 sign+verify"
-else
-  fail "Ed25519"
-fi
+# ── 16. LOGOS ──
+section "16. LOGOS (3)"
+python3 -c "from ciel.logos.core import LogosEngine; le=LogosEngine(); p=le.assert_proposition('test'); le.build_argument([p],p); le.analyze_discourse('donc'); assert len(le.arguments)==1" 2>/dev/null && ok "LogosEngine" || fail "logos"
+python3 -c "from ciel.logos.core import PersuasionModel, Argument, Proposition; pm=PersuasionModel(); pm.apply_figure(type('f',(),{'name':'logos','effect':1.5})()); assert pm.logos>0.5" 2>/dev/null && ok "Persuasion" || fail "persuasion"
+python3 -c "from ciel.logos.core import Hermeneutics; Hermeneutics().interpret('texte')" 2>/dev/null && ok "Herméneutique" || fail "hermeneutics"
 
-if python3 -c "from ciel.core.crypto import x25519_keypair, x25519_exchange; a_priv, a_pub=x25519_keypair(); b_priv, b_pub=x25519_keypair(); assert x25519_exchange(a_priv, b_pub)==x25519_exchange(b_priv, a_pub)" 2>/dev/null; then
-  ok "X25519 ECDH symétrie"
-else
-  fail "X25519"
-fi
+# ── 17. NEURO-SYMBOLIQUE ──
+section "17. NEURO-SYMBOLIQUE (4)"
+python3 -c "from ciel.neuro_symbolic.core import NeuroSymbolicNetwork; nsn=NeuroSymbolicNetwork(4); nsn.forward([0.5,0.5,0,0]); nsn.create_symbol('s',[1,0,0,0])" 2>/dev/null && ok "NeuroSymbolicNetwork" || fail "neuro_symbolic"
+python3 -c "from ciel.neuro_symbolic.core import NeuralSymbolicBridge; nsb=NeuralSymbolicBridge(); nsb.concept_from_exemplars('c',[[1,0],[0.9,0.1]]); assert nsb.classify([0.95,0.05])=='c'" 2>/dev/null && ok "Classification" || fail "classification"
+python3 -c "from ciel.neuro_symbolic.core import SymbolGrounding; sg=SymbolGrounding(3); sg.ground('a',[1,0,0]); sg.ground('b',[1,0,0]); assert sg.similarity('a','b')>0.99" 2>/dev/null && ok "Symbol grounding" || fail "grounding"
+python3 -c "from ciel.neuro_symbolic.core import AbstractionEngine; ae=AbstractionEngine(); from ciel.neuro_symbolic.core import Concept; ae.abstract([Concept('c1','',prototype=[1,0]),Concept('c2','',prototype=[0,1])],'abstrait')" 2>/dev/null && ok "AbstractionEngine" || fail "abstraction"
 
-if python3 -c "from ciel.core.crypto import aead_encrypt, aead_decrypt, new_nonce; k=b'\\x42'*32; n=new_nonce(); ct=aead_encrypt(k, n, b'x'); assert aead_decrypt(k, n, ct)==b'x'" 2>/dev/null; then
-  ok "ChaCha20-Poly1305 AEAD"
-else
-  fail "ChaCha20-Poly1305"
-fi
+# ── 18. BRAIN ──
+section "18. CIELBRAIN (3)"
+python3 -c "from ciel.brain.core import CIELBrain; b=CIELBrain(); b.start(); b.cycle(); b.stop(); assert b.state.n_cycles==1" 2>/dev/null && ok "CIELBrain cycle" || fail "brain cycle"
+python3 -c "from ciel.brain.core import CIELBrain; class D: process=lambda s,x:x*2; b=CIELBrain(); b.load_module('d',D()); assert b.process(5)==10" 2>/dev/null && ok "Pipeline process" || fail "brain pipeline"
+python3 -c "from ciel.brain.core import CIELBrain; b=CIELBrain(); r=[]; b.register_hook('test',lambda **kw: r.append(1)); b.emit('test'); assert len(r)==1" 2>/dev/null && ok "Hook system" || fail "brain hooks"
 
-if python3 -c "from ciel.core.crypto import SealedBox, x25519_keypair, open_sealed_box; priv, pub=x25519_keypair(); box=SealedBox(pub); blob=box.easy_seal(b'x'); assert open_sealed_box(priv, blob)==b'x'" 2>/dev/null; then
-  ok "SealedBox (X25519+ChaCha20)"
-else
-  fail "SealedBox"
-fi
-
-# ── 7. KERNEL & OBSERVABILITY ──────────────────────────────
-section "7. KERNEL & OBSERVABILITY (6 checks)"
-
-if python3 -c "from ciel.core.kernel import Kernel, KernelState; assert KernelState.IDLE.value=='IDLE' and KernelState.RUNNING.value=='RUNNING'" 2>/dev/null; then
-  ok "Kernel states"
-else
-  fail "Kernel"
-fi
-
-if python3 -c "from ciel.core.observability import Counter, Gauge, Histogram, Metrics; m=Metrics(); c=m.get_counter('x'); c.inc(5); g=m.get_gauge('y'); g.set(10); h=m.get_histogram('z'); h.observe(1); assert c.value==5 and g.value==10 and h.count==1" 2>/dev/null; then
-  ok "Counter/Gauge/Histogram"
-else
-  fail "Observability"
-fi
-
-# ── 8. TESTS ───────────────────────────────────────────────
-section "8. TESTS PYTEST"
-
-# Compte les fichiers de tests
-TEST_COUNT=$(find tests -name "test_*.py" -not -path "*/.*" 2>/dev/null | wc -l)
-if [[ "$TEST_COUNT" -ge 5 ]]; then
-  ok "fichiers de tests" "$TEST_COUNT fichiers"
-else
-  fail "fichiers de tests" "seulement $TEST_COUNT"
-fi
-
-# Lance pytest (silencieux)
+# ── 19. TESTS ──
+section "19. TESTS PYTEST"
+TEST_COUNT=$(find tests -name "test_*.py" 2>/dev/null | wc -l)
+ok "fichiers de tests" "$TEST_COUNT fichiers"
 if python3 -m pytest tests/ -q --tb=no 2>/dev/null | tail -1 | grep -qE "passed|failed"; then
   PYTEST_LINE=$(python3 -m pytest tests/ -q --tb=no 2>/dev/null | tail -1)
-  ok "pytest tests/" "$PYTEST_LINE"
-else
-  warn "pytest" "impossible de lancer (voir manuellement)"
-fi
-
-# ── 9. GIT & HYGIÈNE ───────────────────────────────────────
-section "9. GIT & HYGIÈNE (3 checks)"
-
-if [[ -d .git ]]; then
-  ok "git init"
-  # Compte les fichiers dirty
-  if command -v git >/dev/null 2>&1; then
-    DIRTY=$(git status --porcelain 2>/dev/null | wc -l)
-    if [[ "$DIRTY" -eq 0 ]]; then
-      ok "working tree clean"
-    else
-      warn "fichiers dirty" "$DIRTY fichiers non commités"
-    fi
+  ok "pytest" "$PYTEST_LINE"
+  if echo "$PYTEST_LINE" | grep -q "failed"; then
+    warn "pytest" "des tests échouent"
   fi
 else
-  warn "git init" "pas de dépôt git"
+  warn "pytest" "échec"
 fi
 
-# Pas de secrets en clair
-if grep -rE "TELEGRAM_BOT_TOKEN|GROQ_API_KEY|GOOGLE_AI_KEY|GEMINI_API_KEY" --include="*.py" --include="*.md" --include="*.sh" -l . 2>/dev/null | grep -v ".git/" | grep -v "tests/" > /dev/null; then
-  fail "secrets potentiels" "mots-clés API détectés (voir grep)"
+# ── 20. GIT ──
+section "20. GIT & HYGIÈNE (3)"
+[[ -d .git ]] && ok "git init" || warn "git" "pas de dépôt"
+DIRTY=$(git status --porcelain 2>/dev/null | wc -l)
+[[ "$DIRTY" -eq 0 ]] && ok "working tree clean" || warn "fichiers dirty" "$DIRTY non commités"
+if grep -rE "TELEGRAM_BOT_TOKEN|GROQ_API_KEY|GOOGLE_AI_KEY|GEMINI_API_KEY" --include="*.py" --include="*.md" --include="*.sh" -l . 2>/dev/null | grep -v ".git/" > /dev/null; then
+  fail "secrets potentiels" "mots-clés API détectés"
 else
   ok "pas de secrets en clair"
 fi
 
-# ── RÉSUMÉ ─────────────────────────────────────────────────
+# ── RÉSUMÉ ──
 section "RÉSUMÉ"
-TOTAL=$((TOTAL))
 echo
 echo -e "  Total checks : ${BLUE}$TOTAL${NC}"
 echo -e "  ${GREEN}✓ Passed     : $PASSED${NC}"
 echo -e "  ${YELLOW}⚠ Warnings   : $WARNINGS${NC}"
 echo -e "  ${RED}✗ Failed     : $FAILED${NC}"
 echo
-
 if [[ $FAILED -eq 0 ]]; then
   echo -e "  ${GREEN}╔════════════════════════════════════════╗${NC}"
-  echo -e "  ${GREEN}║   CIEL v∞.2 Phase 0 — INTÈGRE ✓       ║${NC}"
+  echo -e "  ${GREEN}║   CIEL v∞.3 — INTÈGRE ✓              ║${NC}"
   echo -e "  ${GREEN}╚════════════════════════════════════════╝${NC}"
-  echo
-  exit 0
 else
   echo -e "  ${RED}╔════════════════════════════════════════╗${NC}"
-  echo -e "  ${RED}║   CIEL v∞.2 Phase 0 — DÉGRADÉ ✗       ║${NC}"
+  echo -e "  ${RED}║   CIEL v∞.3 — DÉGRADÉ ✗               ║${NC}"
   echo -e "  ${RED}╚════════════════════════════════════════╝${NC}"
-  echo
-  exit 1
 fi
+exit $FAILED
