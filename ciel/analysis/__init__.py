@@ -15,7 +15,41 @@ Strate 6 — LABYRINTHE : Moteur d'Analyse Multi-Paradigme.
 
 Paradigmes :
   - déductif, inductif, abductif, analogique, statistique, bayésien
-
-Phase 0 : stubs alignés v∞.2. Implémentation Phase 1 (CONSCIENCE).
 """
 from __future__ import annotations
+
+from ciel.analysis.core import (
+    AnalysisMode,
+    AnalysisDimension,
+    Paradigm,
+    AnalysisContext,
+    AnalysisResult,
+    AnalysisEngine,
+    LabyrinthEngine,
+    BaseAnalyzer,
+    DescriptiveAnalyzer,
+    DiagnosticAnalyzer,
+    PredictiveAnalyzer,
+    PrescriptiveAnalyzer,
+    ExploratoryAnalyzer,
+    CounterfactualAnalyzer,
+    MetaAnalyzer,
+)
+
+__all__ = [
+    "AnalysisMode",
+    "AnalysisDimension",
+    "Paradigm",
+    "AnalysisContext",
+    "AnalysisResult",
+    "AnalysisEngine",
+    "LabyrinthEngine",
+    "BaseAnalyzer",
+    "DescriptiveAnalyzer",
+    "DiagnosticAnalyzer",
+    "PredictiveAnalyzer",
+    "PrescriptiveAnalyzer",
+    "ExploratoryAnalyzer",
+    "CounterfactualAnalyzer",
+    "MetaAnalyzer",
+]
