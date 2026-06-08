@@ -22,6 +22,7 @@ from ciel.math.core import MathEngine
 from ciel.memory.core import MemoryEngine
 from ciel.meta.core import MetaEngine
 from ciel.naming.core import NamingEngine
+from ciel.naming.agents import bootstrap_naming_engine
 from ciel.noosphere.core import NoosphereEngine
 from ciel.openclaw.core import OpenClawEngine
 from ciel.os.core import OSEngine
@@ -153,7 +154,9 @@ class CIELBrain:
         self.load_module("math", MathEngine())
         self.load_module("memory", MemoryEngine())
         self.load_module("meta", MetaEngine())
-        self.load_module("naming", NamingEngine())
+        naming_engine = NamingEngine()
+        bootstrap_naming_engine(naming_engine)
+        self.load_module("naming", naming_engine)
         self.load_module("noosphere", NoosphereEngine())
         self.load_module("openclaw", OpenClawEngine())
         self.load_module("os", OSEngine())
