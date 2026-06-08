@@ -12,7 +12,33 @@ Sources :
   - APIs REST/GraphQL
   - Bases scientifiques (arXiv, PubMed, ...)
   - OSINT légal (données publiques)
-
-Phase 0 : stubs alignés v∞.2. Implémentation Phase 3 (CIEL).
 """
 from __future__ import annotations
+
+from ciel.noosphere.core import (
+    SourceType,
+    ContentType,
+    SourceResponse,
+    SourceRequest,
+    RateLimiter,
+    RetryPolicy,
+    WebCrawler,
+    ApiManager,
+    FederatedLearning,
+    OSINTSource,
+    NoosphereEngine,
+)
+
+__all__ = [
+    "SourceType",
+    "ContentType",
+    "SourceResponse",
+    "SourceRequest",
+    "RateLimiter",
+    "RetryPolicy",
+    "WebCrawler",
+    "ApiManager",
+    "FederatedLearning",
+    "OSINTSource",
+    "NoosphereEngine",
+]
