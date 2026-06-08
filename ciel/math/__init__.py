@@ -2,18 +2,24 @@
 Transverse — MATH : Mathématiques des Profondeurs.
 
 Composants :
-  - category_theory   : Catégories, foncteurs, adjoints
-  - hott              : Homotopy Type Theory (types = espaces)
-  - information_geometry : géométrie de Riemann sur distributions
-  - topology          : homologie persistante, Betti, TDA
-  - clifford          : algèbres géométriques, rotations unifiées
-
-Concepts profonds :
-  - Axiome d'univalence (HoTT) : types équivalents sont égaux
-  - ∞-catégories : morphismes à toutes les dimensions
-  - Géométrie symplectique : conservation Hamilton
-  - Transport optimal : Wasserstein, Schrödinger Bridge
-
-Phase 0 : stubs alignés v∞.2. Implémentation Phase 3 (CIEL).
+  - category_theory      : Catégories, foncteurs, transformations
+  - hott                 : Homotopy Type Theory (types = espaces)
+  - information_geometry : métrique de Fisher-Rao
+  - topology             : homologie persistante, Betti, TDA
+  - clifford             : algèbre géométrique Cl(3,0)
+  - optimal_transport    : Wasserstein 1D/2D, Sinkhorn
 """
 from __future__ import annotations
+
+from ciel.math.core import (
+    Category, Functor, NaturalTransformation,
+    Simplex, SimplicialComplex, PersistentHomology,
+    CliffordAlgebra, OptimalTransport, FisherMetric, HoTT,
+    MathEngine,
+)
+__all__ = [
+    "Category", "Functor", "NaturalTransformation",
+    "Simplex", "SimplicialComplex", "PersistentHomology",
+    "CliffordAlgebra", "OptimalTransport", "FisherMetric", "HoTT",
+    "MathEngine",
+]
