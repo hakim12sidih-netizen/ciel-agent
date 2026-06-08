@@ -60,6 +60,11 @@ from ciel.evolution.qd import MAPElites, CVT_MAPElites, AURORA, SAIL
 # Bloc J : Multi-Objectif
 from ciel.evolution.multiobjective import NSGA2, NSGA3, MOEAD, IBEA, HypE
 
+# Bloc K : Architectures Avancées (v∞.4)
+from ciel.evolution.metamorphic_core import MetamorphicCore, ArchitecturalGene, TransmutationProposal
+from ciel.evolution.emergent_language import EmergentLanguage, Signal, EmergentToken
+from ciel.evolution.titan import TitanEcosystem, TitanRL, HierarchicalEpisodicMemory
+
 # Moteur CIELBrain
 from ciel.evolution.core import EvolutionEngine
 
@@ -91,6 +96,10 @@ __all__ = [
     "MAPElites", "CVT_MAPElites", "AURORA", "SAIL",
     # Bloc J
     "NSGA2", "NSGA3", "MOEAD", "IBEA", "HypE",
+    # Bloc K — Architectures Avancées
+    "MetamorphicCore", "ArchitecturalGene", "TransmutationProposal",
+    "EmergentLanguage", "Signal", "EmergentToken",
+    "TitanEcosystem", "TitanRL", "HierarchicalEpisodicMemory",
     # Moteur
     "EvolutionEngine",
 ]
