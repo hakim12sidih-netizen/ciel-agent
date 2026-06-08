@@ -45,11 +45,11 @@ class CMAES:
         self.damps = 1 + 2 * max(0, math.sqrt((self.mueff - 1) / (self.dim + 1)) - 1) + self.cs
         self.mean: np.ndarray = np.zeros(self.dim)
         self.sigma: float = 1.0
-        self.C: np.ndarray = np.eye(self.dim)
+        self.C: np.ndarray = np.eye(self.dim).copy()
         self.pc: np.ndarray = np.zeros(self.dim)
         self.ps: np.ndarray = np.zeros(self.dim)
         self.eigenvalues: np.ndarray = np.ones(self.dim)
-        self.eigenvectors: np.ndarray = np.eye(self.dim)
+        self.eigenvectors: np.ndarray = np.eye(self.dim).copy()
         self.generation: int = 0
         self.best_fitness: float = float("inf")
         self.best_vector: np.ndarray = np.array([])
@@ -60,7 +60,7 @@ class CMAES:
     def initialize(self, mean: np.ndarray | None = None) -> None:
         self.mean = mean if mean is not None else (self.params.init_mean if self.params.init_mean is not None else np.zeros(self.dim))
         self.sigma = self.params.init_sigma
-        self.C = np.eye(self.dim)
+        self.C = np.eye(self.dim).copy()
         self.pc = np.zeros(self.dim)
         self.ps = np.zeros(self.dim)
         self._update_eigensystem()
@@ -142,7 +142,7 @@ class CMAES:
         for r in range(restarts):
             self.sigma = self.params.init_sigma * (factor**r)
             self.mean = np.random.uniform(-2, 2, self.dim) * (factor**r)
-            self.C = np.eye(self.dim)
+            self.C = np.eye(self.dim).copy()
             self.pc = np.zeros(self.dim)
             self.ps = np.zeros(self.dim)
             self.generation = 0
@@ -164,7 +164,7 @@ class SepCMAES(CMAES):
         self.ps = (1 - self.cs) * self.ps + math.sqrt(self.cs * (2 - self.cs) * self.mueff) * y / np.sqrt(np.diag(self.C) + 1e-20)
         hsig = (np.linalg.norm(self.ps) / math.sqrt(1 - (1 - self.cs) ** (2 * (self.generation + 1))) < (1.4 + 2.0 / (self.dim + 1)))
         self.pc = (1 - self.cc) * self.pc + hsig * math.sqrt(self.cc * (2 - self.cc) * self.mueff) * y
-        diag_C = np.diag(self.C)
+        diag_C = np.diag(self.C).copy()
         diag_C *= 1 - self.c1 - self.cmu
         diag_C += self.c1 * self.pc**2
         artmp = np.zeros(self.dim)

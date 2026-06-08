@@ -60,6 +60,9 @@ from ciel.evolution.qd import MAPElites, CVT_MAPElites, AURORA, SAIL
 # Bloc J : Multi-Objectif
 from ciel.evolution.multiobjective import NSGA2, NSGA3, MOEAD, IBEA, HypE
 
+# Moteur CIELBrain
+from ciel.evolution.core import EvolutionEngine
+
 __all__ = [
     # Bloc A
     "GeneticAlgorithm", "GeneticOperator",
@@ -88,4 +91,6 @@ __all__ = [
     "MAPElites", "CVT_MAPElites", "AURORA", "SAIL",
     # Bloc J
     "NSGA2", "NSGA3", "MOEAD", "IBEA", "HypE",
+    # Moteur
+    "EvolutionEngine",
 ]

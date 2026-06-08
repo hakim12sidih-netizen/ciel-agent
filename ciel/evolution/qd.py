@@ -124,9 +124,9 @@ class CVT_MAPElites(MAPElites):
         self.centroids: list[np.ndarray] = []
 
     def initialize(self) -> None:
-        super().initialize()
-        # Generate centroids via random sampling in behaviour space
+        # Generate centroids BEFORE parent init (parent calls _discretize)
         self.centroids = [np.random.uniform(-1, 1, self.params.behaviour_dim) for _ in range(self.n_centroids)]
+        super().initialize()
 
     def _discretize(self, bd: np.ndarray) -> tuple[int, ...]:
         dists = [np.linalg.norm(bd - c) for c in self.centroids]
