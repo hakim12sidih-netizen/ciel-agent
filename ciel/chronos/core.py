@@ -249,3 +249,47 @@ class ChronosEngine:
 
     def synchronize(self, external_time: float) -> None:
         self.clock.objective_time = external_time
+
+    def get_stats(self) -> dict[str, Any]:
+        return {
+            "subjective_time": self.clock.subjective_time,
+            "objective_time": self.clock.objective_time,
+            "drift": self.clock.drift,
+            "events": len(self.memory.events),
+            "intervals": len(self.memory.intervals),
+        }
+
+    def process(self, input_data: Any) -> dict[str, Any]:
+        if not isinstance(input_data, dict):
+            return {"success": False, "error": "input must be dict"}
+
+        action = input_data.get("action", "stats")
+        data = {k: v for k, v in input_data.items() if k != "action"}
+
+        if action == "tick":
+            dt = float(data.get("dt", 1.0))
+            t = self.tick(dt)
+            return {"success": True, "action": "tick", "subjective_time": t}
+
+        elif action == "observe":
+            event = self.observe(
+                str(data.get("content", "")),
+                str(data.get("event_type", "generic")),
+                float(data.get("salience", 0.5)),
+            )
+            return {"success": True, "action": "observe", "event_id": event.id}
+
+        elif action == "predict":
+            pred = self.predict()
+            if pred:
+                return {"success": True, "action": "predict", "prediction": pred.content}
+            return {"success": True, "action": "predict", "prediction": None}
+
+        elif action == "rhythms":
+            periods = self.detect_rhythms()
+            return {"success": True, "action": "rhythms", "periods": periods}
+
+        elif action == "stats":
+            return {"success": True, "action": "stats", **self.get_stats()}
+
+        return {"success": False, "error": f"unknown action '{action}'"}

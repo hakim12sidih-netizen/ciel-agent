@@ -259,3 +259,48 @@ class LogosEngine:
         for i in range(n_statements):
             statements.append(f"{['Premièrement', 'Deuxièmement', 'Ensuite', 'Par ailleurs', 'Finalement'][i % 5]}, {topic[:30]}...")
         return statements
+
+    def get_stats(self) -> dict[str, Any]:
+        return {
+            "propositions": len(self.propositions),
+            "arguments": len(self.arguments),
+            "discourse_analyses": len(self.discourse.utterances),
+            "interpretations": len(self.hermeneutics.interpretations),
+        }
+
+    def process(self, input_data: Any) -> dict[str, Any]:
+        if not isinstance(input_data, dict):
+            return {"success": False, "error": "input must be dict"}
+
+        action = input_data.get("action", "stats")
+        data = {k: v for k, v in input_data.items() if k != "action"}
+
+        if action == "assert":
+            prop = self.assert_proposition(
+                str(data.get("content", "")),
+                float(data.get("confidence", 0.5)),
+            )
+            return {"success": True, "action": "assert", "proposition_id": prop.id}
+
+        elif action == "analyze":
+            analysis = self.analyze_discourse(str(data.get("text", "")))
+            return {"success": True, "action": "analyze", "analysis": analysis}
+
+        elif action == "interpret":
+            interpretation = self.interpret(
+                str(data.get("text", "")),
+                data.get("context"),
+            )
+            return {"success": True, "action": "interpret", "interpretation": interpretation}
+
+        elif action == "generate":
+            statements = self.generate_discourse(
+                str(data.get("topic", "")),
+                int(data.get("n", 3)),
+            )
+            return {"success": True, "action": "generate", "statements": statements}
+
+        elif action == "stats":
+            return {"success": True, "action": "stats", **self.get_stats()}
+
+        return {"success": False, "error": f"unknown action '{action}'"}
