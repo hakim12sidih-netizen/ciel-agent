@@ -57,10 +57,23 @@ class GeneticOptimizer:
 
     def _initialize_genomes(self) -> None:
         default = PersonalityProfile(velocity=0.5, precision=0.8, dominance=0.5, empathy=0.7, stealth=0.5)
-        self._agent_genomes["zeus"] = PersonalityProfile(**{**default.__dict__, "dominance": 1.0})
-        self._agent_genomes["athena"] = PersonalityProfile(**{**default.__dict__, "precision": 1.0})
-        self._agent_genomes["hydra_ui"] = PersonalityProfile(**{**default.__dict__, "velocity": 1.0, "stealth": 0.8})
-        self._agent_genomes["erebus"] = PersonalityProfile(**{**default.__dict__, "id": "erebus", "precision": 0.9, "stealth": 1.0})
+        self._agent_genomes["zeus"] = PersonalityProfile(
+            velocity=default.velocity, precision=default.precision,
+            dominance=1.0, empathy=default.empathy, stealth=default.stealth,
+        )
+        self._agent_genomes["athena"] = PersonalityProfile(
+            velocity=default.velocity, precision=1.0,
+            dominance=default.dominance, empathy=default.empathy, stealth=default.stealth,
+        )
+        self._agent_genomes["hydra_ui"] = PersonalityProfile(
+            velocity=1.0, precision=default.precision,
+            dominance=default.dominance, empathy=default.empathy, stealth=0.8,
+        )
+        self._agent_genomes["erebus"] = PersonalityProfile(
+            id="erebus", velocity=default.velocity,
+            precision=0.9, dominance=default.dominance,
+            empathy=default.empathy, stealth=1.0,
+        )
 
     async def absorb_into(self, survivor: Any, victim: Any) -> None:
         if survivor is None or victim is None:

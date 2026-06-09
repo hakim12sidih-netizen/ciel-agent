@@ -16,7 +16,7 @@ class ChronoLogos:
     def __init__(self, abductive_inference: Any | None = None) -> None:
         self._abduction = abductive_inference
         self._prophecy_count = 0
-        self._narrative_history: list[str] = field(default_factory=list)
+        self._narrative_history: list[str] = []
 
     def record_narrative(self, entry: str) -> None:
         self._narrative_history.append(entry)
