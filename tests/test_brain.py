@@ -95,7 +95,7 @@ class TestCIELBrain:
         assert b.has_module("security") is True
         assert b.has_module("skills") is True
         assert b.has_module("swarm") is True
-        assert len(b.state.modules_loaded) == 28
+        assert len(b.state.modules_loaded) == 46
 
     def test_process_across_all_modules(self):
         b = CIELBrain()

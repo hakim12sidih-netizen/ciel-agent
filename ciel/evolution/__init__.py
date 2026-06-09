@@ -1,7 +1,7 @@
 """
-CIEL v∞.3 — Evolution : Arsenal Évolutionnaire Complet (60+ algorithmes).
+CIEL v∞.4 — Evolution : Arsenal Évolutionnaire Complet (80+ algorithmes).
 
-Inspiré de HYDRA evolution module (60+ algorithmes TS).
+Inspiré de HYDRA evolution module (60+ algorithmes TS + portages v∞.4).
 Porté en Python avec intégration native.
 
 Architecture :
@@ -16,6 +16,11 @@ Architecture :
 - Bloc H : Co-Évolution & Symbiogenèse
 - Bloc I : Quality-Diversity (MAP-Elites, CVT-MAP-Elites, etc.)
 - Bloc J : Multi-Objectif (NSGA-II, MOEA/D, IBEA, etc.)
+- Bloc K : Architectures Avancées v∞.4 (MetamorphicCore, EmergentLanguage, Titan)
+- Modules v∞.4 : Aegis, CausalBrain, CRISPR_Titan, Curator, DialecticalEngine,
+  DreamWeaver, EntropyHarvester, GladiatorArena, KarmicMemory, LeaderNetwork,
+  ParadoxEngine, PhiEngine, QuantumResonance, ResonanceEngine, Sensorium,
+  StrangeLoop, SymbioticProtocol, ArcheDeNoe
 """
 from __future__ import annotations
 
@@ -60,7 +65,27 @@ from ciel.evolution.qd import MAPElites, CVT_MAPElites, AURORA, SAIL
 # Bloc J : Multi-Objectif
 from ciel.evolution.multiobjective import NSGA2, NSGA3, MOEAD, IBEA, HypE
 
-# Bloc K : Architectures Avancées (v∞.4)
+# ——— Modules d'Architecture (Portage evolution_hydra) ———
+from ciel.evolution.aegis import Aegis
+from ciel.evolution.arche_de_noe import ArcheDeNoe, ExistentialThreat, ArkEntry
+from ciel.evolution.causal_brain import CausalBrain, CausalEvent, CausalGraph
+from ciel.evolution.crispr_titan import CRISPR_Titan
+from ciel.evolution.curator import Curator, DataArtifact, DataQuality
+from ciel.evolution.dialectical_engine import DialecticalEngine
+from ciel.evolution.dream_weaver import DreamWeaver, Dream, DreamPhase
+from ciel.evolution.entropy_harvester import EntropyHarvester
+from ciel.evolution.gladiator_arena import GladiatorArena
+from ciel.evolution.karmic_memory import KarmicMemory
+from ciel.evolution.leader_network import LeaderNetwork
+from ciel.evolution.paradox_engine import ParadoxEngine, Paradox, ParadoxType, ParadoxicalInsight
+from ciel.evolution.phi_engine import PhiEngine
+from ciel.evolution.quantum_resonance import QuantumResonance, Qubit, ResonanceField
+from ciel.evolution.resonance_engine import ResonanceEngine, ResonancePattern
+from ciel.evolution.sensorium import Sensorium, Modality, SensoryInput, IntegratedPercept
+from ciel.evolution.strange_loop import StrangeLoop, StrangeLoopNode, LoopState
+from ciel.evolution.symbiotic_protocol import SymbioticProtocol, SymbioticPair, SymbiosisType
+
+# ——— Bloc K : Architectures Avancées (v∞.4) ———
 from ciel.evolution.metamorphic_core import MetamorphicCore, ArchitecturalGene, TransmutationProposal
 from ciel.evolution.emergent_language import EmergentLanguage, Signal, EmergentToken
 from ciel.evolution.titan import TitanEcosystem, TitanRL, HierarchicalEpisodicMemory
@@ -100,6 +125,18 @@ __all__ = [
     "MetamorphicCore", "ArchitecturalGene", "TransmutationProposal",
     "EmergentLanguage", "Signal", "EmergentToken",
     "TitanEcosystem", "TitanRL", "HierarchicalEpisodicMemory",
+    # Modules d'Architecture (Portage evolution_hydra)
+    "Aegis", "ArcheDeNoe", "ExistentialThreat", "ArkEntry",
+    "CausalBrain", "CausalEvent", "CausalGraph",
+    "CRISPR_Titan", "Curator", "DataArtifact", "DataQuality",
+    "DialecticalEngine", "DreamWeaver", "Dream", "DreamPhase",
+    "EntropyHarvester", "GladiatorArena", "KarmicMemory",
+    "LeaderNetwork", "ParadoxEngine", "Paradox", "ParadoxType", "ParadoxicalInsight",
+    "PhiEngine", "QuantumResonance", "Qubit", "ResonanceField",
+    "ResonanceEngine", "ResonancePattern",
+    "Sensorium", "Modality", "SensoryInput", "IntegratedPercept",
+    "StrangeLoop", "StrangeLoopNode", "LoopState",
+    "SymbioticProtocol", "SymbioticPair", "SymbiosisType",
     # Moteur
     "EvolutionEngine",
 ]
