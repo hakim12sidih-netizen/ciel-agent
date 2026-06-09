@@ -35,6 +35,17 @@ from ciel.evolution.resonance_engine import ResonanceEngine
 from ciel.evolution.sensorium import Sensorium
 from ciel.evolution.strange_loop import StrangeLoop
 from ciel.evolution.symbiotic_protocol import SymbioticProtocol
+from ciel.evolution.abductive_inference import AbductiveInference
+from ciel.evolution.ascension_protocol import AscensionProtocol
+from ciel.evolution.chrono_logos import ChronoLogos
+from ciel.evolution.distiller_daemon import DistillerDaemon
+from ciel.evolution.heal import Heal
+from ciel.evolution.illm_client import MockLLMClient
+from ciel.evolution.imperial_cycle import ImperialCycle
+from ciel.evolution.llm_transmuter import LLMTransmuter
+from ciel.evolution.research_daemon import ResearchDaemon
+from ciel.evolution.torch_rl_bridge import TorchRLBridge
+from ciel.evolution.transmutation_budget import TransmutationBudget
 from ciel.forge.core import ForgeEngine
 from ciel.hermes.core import HermesEngine
 from ciel.interfaces.core import InterfacesEngine
@@ -212,7 +223,18 @@ class CIELBrain:
         self.load_module("sensorium", Sensorium())
         self.load_module("strange_loop", StrangeLoop())
         self.load_module("symbiotic_protocol", SymbioticProtocol())
-        self.emit("brain.modules_loaded", count=46)
+        self.load_module("abductive_inference", AbductiveInference())
+        self.load_module("ascension_protocol", AscensionProtocol())
+        self.load_module("chrono_logos", ChronoLogos())
+        self.load_module("distiller_daemon", DistillerDaemon())
+        self.load_module("heal", Heal())
+        self.load_module("illm_client", MockLLMClient())
+        self.load_module("imperial_cycle", ImperialCycle())
+        self.load_module("llm_transmuter", LLMTransmuter())
+        self.load_module("research_daemon", ResearchDaemon())
+        self.load_module("torch_rl_bridge", TorchRLBridge())
+        self.load_module("transmutation_budget", TransmutationBudget())
+        self.emit("brain.modules_loaded", count=57)
 
     def process(self, input_data: Any) -> Any:
         """Pipeline de traitement unifié à travers tous les modules."""
