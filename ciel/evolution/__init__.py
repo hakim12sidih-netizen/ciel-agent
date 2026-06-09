@@ -90,6 +90,24 @@ from ciel.evolution.metamorphic_core import MetamorphicCore, ArchitecturalGene, 
 from ciel.evolution.emergent_language import EmergentLanguage, Signal, EmergentToken
 from ciel.evolution.titan import TitanEcosystem, TitanRL, HierarchicalEpisodicMemory
 
+# ——— Modules v∞.4 supplémentaires (portage evolution_hydra) ———
+from ciel.evolution.abductive_inference import AbductiveInference, Hypothesis
+from ciel.evolution.ascension_protocol import AscensionProtocol, AscensionRecord
+from ciel.evolution.chrono_logos import ChronoLogos
+from ciel.evolution.distiller_daemon import DistillerDaemon
+from ciel.evolution.faction import Faction
+from ciel.evolution.fitness_evaluator import DefaultFitnessEvaluator, HydraContext
+from ciel.evolution.genetic_optimizer import GeneticOptimizer, PersonalityProfile, FactionType
+from ciel.evolution.heal import Heal
+from ciel.evolution.illm_client import ILLMClient, MockLLMClient, LLMCompletionOptions
+from ciel.evolution.imperial_cycle import ImperialCycle, ImperialCycleResult
+from ciel.evolution.leader_daemon import LeaderDaemon
+from ciel.evolution.llm_transmuter import LLMTransmuter, TransmutationResult
+from ciel.evolution.research_daemon import ResearchDaemon
+from ciel.evolution.rl_daemon import RLDaemon
+from ciel.evolution.torch_rl_bridge import TorchRLBridge, RLState, RLStepResult
+from ciel.evolution.transmutation_budget import TransmutationBudget, BudgetConfig, BudgetCheck
+
 # Moteur CIELBrain
 from ciel.evolution.core import EvolutionEngine
 
@@ -137,6 +155,23 @@ __all__ = [
     "Sensorium", "Modality", "SensoryInput", "IntegratedPercept",
     "StrangeLoop", "StrangeLoopNode", "LoopState",
     "SymbioticProtocol", "SymbioticPair", "SymbiosisType",
+    # Modules v∞.4 supplémentaires
+    "AbductiveInference", "Hypothesis",
+    "AscensionProtocol", "AscensionRecord",
+    "ChronoLogos",
+    "DistillerDaemon",
+    "Faction",
+    "DefaultFitnessEvaluator", "HydraContext",
+    "GeneticOptimizer", "PersonalityProfile", "FactionType",
+    "Heal",
+    "ILLMClient", "MockLLMClient", "LLMCompletionOptions",
+    "ImperialCycle", "ImperialCycleResult",
+    "LeaderDaemon",
+    "LLMTransmuter", "TransmutationResult",
+    "ResearchDaemon",
+    "RLDaemon",
+    "TorchRLBridge", "RLState", "RLStepResult",
+    "TransmutationBudget", "BudgetConfig", "BudgetCheck",
     # Moteur
     "EvolutionEngine",
 ]
