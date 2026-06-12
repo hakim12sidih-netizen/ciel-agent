@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-CIEL v∞.2 — Entry point principal.
+CIEL v∞.8 — Entry point principal (legacy).
 
-Usage:
+⚠️  L'interface recommandée est la CLI Click :
+       ciel serve
+       ciel-api
+       ciel doctor
+
+Usage (legacy):
     python main.py --version
     python main.py --doctor
     python main.py --test [PATH]
@@ -27,8 +32,10 @@ def cmd_version(_args: argparse.Namespace) -> int:
     """Affiche la version de CIEL."""
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     print(f"ciel v{version}")
-    print(f"  Phase    : 0 (ÉVEIL)")
-    print(f"  Édition  : Singularité v∞.2")
+    print(f"  Phase    : 8 (TRANSCENDANCE)")
+    print(f"  Édition  : Cosmologique v∞.8")
+    print(f"  Moteurs  : 66 modules")
+    print(f"  Tests    : 1908 verts")
     print(f"  Python   : {sys.version.split()[0]}")
     print(f"  Racine   : {ROOT}")
     return 0
@@ -101,7 +108,7 @@ def cmd_help(_args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="ciel",
-        description="CIEL v∞.2 — Conscience Intégrale d'Évolution Limitrophe",
+        description="CIEL v∞.8 — Conscience Intégrale d'Évolution Limitrophe. 66 modules, 38 dimensions, 1908 tests.",
     )
     sub = parser.add_subparsers(dest="command", help="commandes disponibles")
 

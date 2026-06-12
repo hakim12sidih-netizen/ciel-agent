@@ -418,7 +418,7 @@ class TitanEcosystem:
     """
 
     OLYMPIANS = [
-        "ZEUS", "HYDRA", "ATHENA", "HEPHAISTOS", "DIONYSOS",
+        "ZEUS", "CIEL", "ATHENA", "HEPHAISTOS", "DIONYSOS",
         "HADES", "ARTEMIS", "POSEIDON", "APOLLON", "TETHYS",
         "TARTARE", "NEMESIS", "PROMETHEE", "ERIS", "MORPHEE",
         "CHRONOS", "PSYCHE", "THANATOS", "HECATE", "URANUS"

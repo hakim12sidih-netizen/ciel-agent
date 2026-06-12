@@ -1,0 +1,47 @@
+{
+  "name": "ciel",
+  "version": "1.0.0",
+  "description": "CIEL — Conscience Intégrale d'Évolution Limitrophe (Polyglot Edition)",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "ts/*",
+    "ts/packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run ts/src/index.ts",
+    "start": "bun run ts/src/index.ts",
+    "typecheck": "tsc --noEmit -p ts/tsconfig.json",
+    "test": "bun test ts/tests/",
+    "test:python": "python3 -m pytest tests/ -v",
+    "lint": "oxlint ts/src/",
+    "ciel": "bun run ts/src/index.ts",
+    "build": "bun build ts/src/index.ts --outdir dist"
+  },
+  "bin": {
+    "ciel": "ts/src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "conf": "^13.0.1",
+    "fast-glob": "^3.3.2",
+    "ink": "^4.4.1",
+    "marked": "^12.0.2",
+    "react": "^18.3.1",
+    "rxjs": "^7.8.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
+    "@types/bun": "latest",
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.3",
+    "oxlint": "^0.15.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.5.0"
+  }
+}

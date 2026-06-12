@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.transmutation_budget import TransmutationBudget, BudgetConfig, BudgetCheck
+from ciel.evolution.transmutation_budget import TransmutationBudget
 
 
 class TestBudgetConfig:

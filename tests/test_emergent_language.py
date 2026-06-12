@@ -3,10 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.emergent_language import (
-    EmergentLanguage, Signal, SignalDomain, GrammarRule,
-    LanguageState, Intent, TokenizationResult, EmergentToken, SignalMeaning,
-)
+from ciel.evolution.emergent_language import EmergentLanguage, SymbolicToken
 
 
 class TestSignalDomain:

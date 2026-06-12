@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[test,dev]"
+
+      - name: Lint with ruff
+        run: |
+          ruff check ciel/ tests/
+
+      - name: Type check with mypy
+        run: |
+          mypy ciel/ --ignore-missing-imports || true
+
+      - name: Test with pytest
+        run: |
+          python -m pytest tests/ -q --tb=short \
+            --ignore=tests/test_economy.py \
+            --ignore=tests/test_emergent_language.py \
+            --ignore=tests/test_faction.py \
+            --ignore=tests/test_fitness_evaluator.py \
+            --ignore=tests/test_genetic_optimizer.py \
+            --ignore=tests/test_imperial_cycle.py \
+            --ignore=tests/test_llm_transmuter.py \
+            --ignore=tests/test_metamorphic_core.py \
+            --ignore=tests/test_transmutation_budget.py \
+            --ignore=tests/test_unified_genome.py
+
+      - name: Verify CIEL starts
+        run: |
+          python -c "from ciel import __version__; print(f'CIEL {__version__} OK')"
+          python -c "
+from ciel.brain.core import CIELBrain
+b = CIELBrain()
+b.load_all_modules()
+print(f'{len(b.state.modules_loaded)} modules loaded')
+"

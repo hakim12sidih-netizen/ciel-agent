@@ -1,0 +1,62 @@
+name: SAGA CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "saga/**"
+      - ".github/workflows/saga.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "saga/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-saga-${{ hashFiles('saga/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-saga-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install pytest ruff
+          if [ -f saga/requirements.txt ]; then pip install -r saga/requirements.txt; fi
+
+      - name: Lint with ruff
+        run: |
+          ruff check saga/ tests/ --ignore=E501
+
+      - name: Test with pytest
+        working-directory: saga
+        run: |
+          python -m pytest tests/test_dummy.py -v --tb=short
+
+      - name: Verify imports
+        run: |
+          python -c "
+import sys
+sys.path.insert(0, 'saga')
+from saga.modules.model import SagaModel
+from saga.modules.config import load_config
+from saga.modules.multimodal import MultimodalEncoder
+print(f'SAGA imports OK')
+"

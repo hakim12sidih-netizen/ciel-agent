@@ -1,6 +1,6 @@
-# HYDRA Polyglot
+# CIEL Polyglot
 
-HYDRA n'est pas limité à TypeScript. Ce dossier contient des backends en
+CIEL n'est pas limité à TypeScript. Ce dossier contient des backends en
 **Python**, **Rust**, et **Go** que TypeScript peut invoquer via subprocess.
 
 ## Structure

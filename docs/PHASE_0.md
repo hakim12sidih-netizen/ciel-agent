@@ -110,6 +110,6 @@ Semaines 9-24 (3 mois) :
 - Strate 6 (Analyse) : 3 modes (descriptif, diagnostique, prédictif)
 - Strate 11 (Chronos) : scheduler asyncio + sommeil
 - Strate 12 (Logos) : interface LLM (Ollama local)
-- Absorption HYDRA : polyglot Rust/Go + bridge
+- Absorption HYDRA, Hermes-Agent, OpenClaw : modules migrés vers CIEL natif
 
 Cible Phase 1 : 500+ tests, doctor 100+ checks.

@@ -29,7 +29,7 @@ done
 
 # ── 2. PACKAGES CIEL ──
 section "2. PACKAGES CIEL (15)"
-for pkg in core evolution hermes openclaw immunitaire narrateur vsm fep machina_godel quine logics lm economie conscience chronos logos neuro_symbolic brain; do
+for pkg in core evolution llmbridge messaging immunitaire narrateur vsm fep machina_godel quine logics lm economie conscience chronos logos neuro_symbolic brain; do
   [[ -d "ciel/$pkg" ]] && [[ -f "ciel/$pkg/__init__.py" ]] && ok "ciel/$pkg" || fail "ciel/$pkg" "manquant"
 done
 
@@ -73,19 +73,19 @@ for algo in GeneticAlgorithm CMAES NEAT PPO DQN PSO ACO MAPElites NSGA2; do
 done
 python3 -c "from ciel.evolution.genetic import GeneticAlgorithm; import numpy as np; ga=GeneticAlgorithm(fitness_fn=lambda x:-sum(x*x), gene_bounds=(-1,1), pop_size=10); ga.run(5)" 2>/dev/null && ok "GA run test" || fail "GA run"
 
-# ── 8. HERMES ──
-section "8. HERMES (4)"
-python3 -c "from ciel.hermes.gateway import Message, MessageDirection; m=Message(id='1', text='test', sender_id='me', platform='telegram', direction=MessageDirection.OUTGOING); assert m.text=='test'" 2>/dev/null && ok "Hermes Message" || fail "hermes message"
-python3 -c "from ciel.hermes.hermes_state import HermesState; s=HermesState(); s.store()" 2>/dev/null && ok "HermesState" || fail "hermes state"
-python3 -c "from ciel.hermes.providers import ProviderBase; p=ProviderBase()" 2>/dev/null && ok "LLM Providers import" || fail "hermes providers"
-python3 -c "from ciel.hermes.gateway import TelegramAdapter" 2>/dev/null && ok "TelegramAdapter" && python3 -c "from ciel.hermes.gateway import DiscordAdapter" 2>/dev/null && ok "DiscordAdapter" || warn "adapters"
+# ── 8. LLMBRIDGE ──
+section "8. LLMBRIDGE (4)"
+python3 -c "from ciel.llmbridge.gateway import Message, MessageDirection; m=Message(id='1', text='test', sender_id='me', platform='telegram', direction=MessageDirection.OUTGOING); assert m.text=='test'" 2>/dev/null && ok "LLMBridge Message" || fail "llmbridge message"
+python3 -c "from ciel.llmbridge.llm_state import LLMState; s=LLMState(); s.store()" 2>/dev/null && ok "LLMState" || fail "llmbridge state"
+python3 -c "from ciel.llmbridge.providers import ProviderBase; p=ProviderBase()" 2>/dev/null && ok "LLM Providers import" || fail "llmbridge providers"
+python3 -c "from ciel.llmbridge.gateway import TelegramAdapter" 2>/dev/null && ok "TelegramAdapter" && python3 -c "from ciel.llmbridge.gateway import DiscordAdapter" 2>/dev/null && ok "DiscordAdapter" || warn "adapters"
 
-# ── 9. OPENCLAW ──
-section "9. OPENCLAW (5)"
+# ── 9. MESSAGING ──
+section "9. MESSAGING (5)"
 for ch in WhatsAppAdapter SignalAdapter MatrixAdapter IRCAdapter; do
-  python3 -c "from ciel.openclaw.channels import $ch" 2>/dev/null && ok "openclaw.$ch" || warn "openclaw.$ch"
+  python3 -c "from ciel.messaging.channels import $ch" 2>/dev/null && ok "messaging.$ch" || warn "messaging.$ch"
 done
-python3 -c "from ciel.openclaw.gateway import GatewayServer" 2>/dev/null && ok "OpenClawGateway" || warn "openclaw gateway"
+python3 -c "from ciel.messaging.gateway import GatewayServer" 2>/dev/null && ok "MessagingGateway" || warn "messaging gateway"
 
 # ── 10. STRATES 4-5 ──
 section "10. IMMUNITAIRE + NARRATEUR (4)"

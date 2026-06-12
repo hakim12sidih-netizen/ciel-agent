@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.imperial_cycle import ImperialCycle, ImperialCycleResult
-from ciel.evolution.fitness_evaluator import DefaultFitnessEvaluator, HydraContext
+from ciel.evolution.imperial_cycle import ImperialCycle, GenerationResult
+from ciel.evolution.fitness_evaluator import FitnessEvaluator
 
 
-class TestImperialCycleResult:
+class TestGenerationResult:
     def test_create(self):
-        r = ImperialCycleResult(
-            generation=0, survivors=[], dead=[], clusters={},
-            best_fitness=0.0, median_fitness=0.0, super_organisms_added=0,
+        r = GenerationResult(
+            number=0, population_size=0, elite_count=0,
+            best_fitness=0.0, avg_fitness=0.0, diversity=0.0,
+            faction_count=0, symbiotic_pacts=0, duration_ms=0.0,
         )
-        assert r.generation == 0
+        assert r.number == 0
 
 
 class TestImperialCycle:
@@ -76,7 +77,7 @@ class TestImperialCycle:
         ic = ImperialCycle(population_size=5, elite_size=2, genome_factory=lambda: MockGenome())
         import asyncio
         result = asyncio.run(ic.run_generation())
-        assert result.generation == 1
+        assert result.number == 1
         assert ic.get_current_generation() == 1
 
     def test_process_state(self):

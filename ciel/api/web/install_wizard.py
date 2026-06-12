@@ -1,0 +1,579 @@
+"""
+CIEL v∞.8 — Installation Wizard HTML.
+Assistant d'installation intelligent avec détection d'environnement.
+"""
+
+INSTALL_WIZARD_HTML = """<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIEL — Installation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-purple: #a371f7;
+            --accent-orange: #f0883e;
+            --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+        }
+        body { font-family: var(--font-mono); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 24px; }
+        header { display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
+        header h1 { font-size: 20px; font-weight: 600; }
+        header span { color: var(--text-secondary); font-size: 13px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-ok { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .badge-warn { background: rgba(210,153,34,0.15); color: var(--accent-yellow); }
+        .badge-err { background: rgba(248,81,73,0.15); color: var(--accent-red); }
+        .badge-info { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+
+        .progress-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); border-radius: 2px; transition: width 0.5s; width: 0%; }
+
+        .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .card-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+
+        .check-grid { display: flex; flex-direction: column; gap: 6px; }
+        .check-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; font-size: 13px; }
+        .check-item:hover { background: var(--bg-tertiary); }
+        .check-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+        .check-icon.ok { background: rgba(63,185,80,0.2); color: var(--accent-green); }
+        .check-icon.warning { background: rgba(210,153,34,0.2); color: var(--accent-yellow); }
+        .check-icon.error { background: rgba(248,81,73,0.2); color: var(--accent-red); }
+        .check-icon.info { background: rgba(88,166,255,0.2); color: var(--accent-blue); }
+        .check-msg { flex: 1; }
+        .check-detail { font-size: 11px; color: var(--text-secondary); }
+
+        .step-list { display: flex; flex-direction: column; gap: 8px; }
+        .step-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); cursor: pointer; transition: all 0.2s; }
+        .step-item:hover { border-color: var(--accent-blue); }
+        .step-item.completed { border-color: var(--accent-green); opacity: 0.7; }
+        .step-item.completed .step-num { background: var(--accent-green); }
+        .step-item.active { border-color: var(--accent-blue); }
+        .step-item.active .step-num { background: var(--accent-blue); }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .step-info { flex: 1; }
+        .step-name { font-size: 13px; font-weight: 500; }
+        .step-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+        .step-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+        .step-status.pending { background: rgba(139,148,158,0.15); color: var(--text-secondary); }
+        .step-status.running { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+        .step-status.done { background: rgba(63,185,80,0.15); color: var(--accent-green); }
+        .step-status.skipped { background: rgba(139,148,158,0.1); color: var(--text-secondary); }
+
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--font-mono); font-size: 13px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: var(--accent-blue); color: #fff; }
+        .btn-primary:hover { background: #4090e0; }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--border-color); }
+        .btn-success { background: var(--accent-green); color: #fff; }
+        .btn-success:hover { background: #35a04a; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+        .config-form { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .form-input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-mono); font-size: 13px; outline: none; }
+        .form-input:focus { border-color: var(--accent-blue); }
+        .form-hint { font-size: 11px; color: var(--text-secondary); }
+
+        .log-box { background: #000; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; font-size: 12px; line-height: 1.6; max-height: 300px; overflow-y: auto; font-family: var(--font-mono); }
+        .log-line { color: var(--text-primary); }
+        .log-line.info { color: var(--accent-blue); }
+        .log-line.ok { color: var(--accent-green); }
+        .log-line.err { color: var(--accent-red); }
+        .log-line.warn { color: var(--accent-yellow); }
+
+        .flex-row { display: flex; align-items: center; gap: 8px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mt-8 { margin-top: 8px; }
+        .mt-16 { margin-top: 16px; }
+        .gap-8 { gap: 8px; }
+        .text-center { text-align: center; }
+
+        .system-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .sys-item { padding: 8px; border-radius: 6px; background: var(--bg-primary); border: 1px solid var(--border-color); }
+        .sys-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .sys-value { font-size: 13px; font-weight: 500; margin-top: 2px; }
+
+        .step-output { margin-top: 8px; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+
+        .tab-bar { display: flex; gap: 2px; margin-bottom: 16px; }
+        .tab-btn { padding: 8px 16px; border-radius: 6px 6px 0 0; border: 1px solid var(--border-color); border-bottom: none; background: var(--bg-secondary); color: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; cursor: pointer; }
+        .tab-btn.active { background: var(--bg-primary); color: var(--text-primary); border-top: 2px solid var(--accent-blue); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
+        @keyframes dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
+
+        .skeleton { background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <header>
+            <div>
+                <h1>⚡ CIEL <span id="cielVersion">v∞.8</span></h1>
+                <span style="font-size:12px;color:var(--text-secondary);">Assistant d'installation intelligent</span>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <a href="/" style="text-decoration:none;"><button class="btn btn-secondary btn-sm">IDE</button></a>
+            </div>
+        </header>
+
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('checks')">🔍 Vérifications</button>
+            <button class="tab-btn" onclick="switchTab('config')">⚙️ Configuration</button>
+            <button class="tab-btn" onclick="switchTab('install')">📦 Installation</button>
+            <button class="tab-btn" onclick="switchTab('keys')">🔑 Clés API</button>
+        </div>
+
+        <!-- Checks Tab -->
+        <div class="tab-content active" id="tab-checks">
+            <div class="card">
+                <div class="flex-between">
+                    <div class="card-title">Diagnostic système</div>
+                    <button class="btn btn-secondary btn-sm" id="refreshBtn" onclick="runSystemChecks()">🔄 Actualiser</button>
+                </div>
+                <div class="check-grid" id="checksContainer">
+                    <div class="text-center" style="padding:24px;color:var(--text-secondary);">
+                        <div class="skeleton" style="height:40px;width:100%;margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:40px;width:80%;margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:40px;width:60%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Système détecté</div>
+                <div class="system-info" id="sysInfoContainer">
+                    <div class="skeleton" style="height:50px;"></div>
+                    <div class="skeleton" style="height:50px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Config Tab -->
+        <div class="tab-content" id="tab-config">
+            <div class="card">
+                <div class="card-title">Configuration de base</div>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    Ces paramètres seront enregistrés dans <code>~/.ciel/ciel.json</code>
+                </p>
+                <div class="config-form" id="configForm">
+                    <div class="skeleton" style="height:60px;"></div>
+                    <div class="skeleton" style="height:60px;"></div>
+                    <div class="skeleton" style="height:60px;"></div>
+                </div>
+                <div class="mt-16 flex-row" style="gap:8px;">
+                    <button class="btn btn-primary" onclick="saveConfig()">💾 Sauvegarder la config</button>
+                    <button class="btn btn-secondary" onclick="loadConfig()">🔄 Recharger</button>
+                </div>
+                <div id="configResult" class="mt-8"></div>
+            </div>
+        </div>
+
+        <!-- Install Tab -->
+        <div class="tab-content" id="tab-install">
+            <div class="card">
+                <div class="flex-between">
+                    <div class="card-title">Étapes d'installation</div>
+                    <div class="flex-row gap-8">
+                        <button class="btn btn-secondary btn-sm" onclick="runAllSteps()">▶️ Tout exécuter</button>
+                        <button class="btn btn-secondary btn-sm" onclick="loadSteps()">🔄</button>
+                    </div>
+                </div>
+                <div class="step-list" id="stepsContainer">
+                    <div class="skeleton" style="height:52px;margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:52px;margin-bottom:8px;"></div>
+                    <div class="skeleton" style="height:52px;"></div>
+                </div>
+            </div>
+
+            <div class="card" id="outputCard" style="display:none;">
+                <div class="flex-between">
+                    <div class="card-title" id="outputTitle">Sortie</div>
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('outputBox').textContent=''">Effacer</button>
+                </div>
+                <div class="log-box" id="outputBox"></div>
+            </div>
+        </div>
+
+        <!-- API Keys Tab -->
+        <div class="tab-content" id="tab-keys">
+            <div class="card">
+                <div class="card-title">🔑 Configuration des clés API</div>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    Optionnel — CIEL fonctionne sans, mais les capacités LLM seront limitées.
+                </p>
+                <div class="config-form" id="keysForm">
+                    <div class="skeleton" style="height:60px;"></div>
+                    <div class="skeleton" style="height:60px;"></div>
+                    <div class="skeleton" style="height:60px;"></div>
+                </div>
+                <div class="mt-16">
+                    <button class="btn btn-primary" onclick="saveApiKeys()">💾 Sauvegarder les clés</button>
+                </div>
+                <div id="keysResult" class="mt-8"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin + '/v1/install';
+
+        // ── Tab switching ──
+        function switchTab(name) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab-btn[onclick*="${name}"]`).classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        // ── System checks ──
+        async function runSystemChecks() {
+            const checksEl = document.getElementById('checksContainer');
+            const sysEl = document.getElementById('sysInfoContainer');
+            checksEl.innerHTML = '<div class="text-center" style="padding:24px;color:var(--text-secondary);"><div class="skeleton" style="height:40px;width:100%;"></div></div>';
+
+            try {
+                const [checksRes, sysRes] = await Promise.all([
+                    fetch(API + '/checks'),
+                    fetch(API + '/system')
+                ]);
+                const checks = await checksRes.json();
+                const sys = await sysRes.json();
+
+                // Update version
+                document.getElementById('cielVersion').textContent = 'v' + sys.ciel_version;
+
+                // System info
+                sysEl.innerHTML = `
+                    <div class="sys-item"><div class="sys-label">OS</div><div class="sys-value">${sys.os} ${sys.os_version}</div></div>
+                    <div class="sys-item"><div class="sys-label">Python</div><div class="sys-value">${sys.python_version}</div></div>
+                    <div class="sys-item"><div class="sys-label">RAM</div><div class="sys-value">${sys.memory_gb} Go</div></div>
+                    <div class="sys-item"><div class="sys-label">CPU</div><div class="sys-value">${sys.cpu_cores} cœurs</div></div>
+                    <div class="sys-item"><div class="sys-label">Environnement</div><div class="sys-value">${sys.is_venv ? '✓ venv' : '✗ hors venv'}</div></div>
+                    <div class="sys-item"><div class="sys-label">Home</div><div class="sys-value">${sys.home_dir}</div></div>
+                    ${sys.docker_available ? '<div class="sys-item"><div class="sys-label">Docker</div><div class="sys-value">✓ disponible</div></div>' : ''}
+                    ${sys.bun_available ? '<div class="sys-item"><div class="sys-label">Bun</div><div class="sys-value">✓ ${sys.bun_version}</div></div>' : ''}
+                `;
+
+                // Checks
+                const iconMap = { ok: '✓', warning: '!', error: '✗', info: 'i' };
+                checksEl.innerHTML = checks.map(c => `
+                    <div class="check-item">
+                        <div class="check-icon ${c.status}">${iconMap[c.status] || '?'}</div>
+                        <div class="check-msg">${c.message}</div>
+                        ${c.detail ? '<div class="check-detail">' + c.detail + '</div>' : ''}
+                    </div>
+                `).join('');
+
+                // Update progress
+                const okCount = checks.filter(c => c.status === 'ok').length;
+                const pct = Math.round((okCount / checks.length) * 100);
+                document.getElementById('progressFill').style.width = pct + '%';
+
+            } catch (e) {
+                checksEl.innerHTML = `<div style="color:var(--accent-red);padding:16px;">Erreur: ${e.message}</div>`;
+            }
+        }
+
+        // ── Config categories ──
+        const CONFIG_CATEGORIES = [
+            { id: 'server', icon: '🖥️', label: 'Serveur API' },
+            { id: 'brain', icon: '🧠', label: 'Cerveau (LLM)' },
+            { id: 'database', icon: '🗄️', label: 'Base de données' },
+            { id: 'cache', icon: '⚡', label: 'Cache' },
+            { id: 'security', icon: '🔒', label: 'Sécurité' },
+            { id: 'vision', icon: '👁️', label: 'Vision' },
+            { id: 'control', icon: '🎮', label: 'Contrôle système' },
+            { id: 'sandbox', icon: '📦', label: 'Sandbox' },
+            { id: 'websearch', icon: '🌐', label: 'Recherche web' },
+            { id: 'clones', icon: '👥', label: 'Clones' },
+            { id: 'evolution', icon: '🧬', label: 'Évolution' },
+            { id: 'economy', icon: '💰', label: 'Économie' },
+            { id: 'logging', icon: '📝', label: 'Logging' },
+        ];
+
+        function cfgCategory(key) {
+            for (const cat of CONFIG_CATEGORIES) {
+                if (key.startsWith(cat.id + '_') || key === cat.id + '_') return cat;
+            }
+            // API keys
+            if (key.startsWith('provider_')) return { id: 'keys', icon: '🔑', label: 'Clés API LLM' };
+            return null;
+        }
+
+        let allSuggestions = [];
+
+        // ── Config suggestions ──
+        async function loadConfig() {
+            const form = document.getElementById('configForm');
+            try {
+                const r = await fetch(API + '/config-suggestions');
+                allSuggestions = await r.json();
+                renderConfig();
+            } catch (e) {
+                form.innerHTML = `<div style="color:var(--accent-red);">Erreur: ${e.message}</div>`;
+            }
+        }
+
+        function renderConfig() {
+            const form = document.getElementById('configForm');
+            const nonSensitive = allSuggestions.filter(s => !s.sensitive);
+            const byCat = {};
+            for (const s of nonSensitive) {
+                const cat = cfgCategory(s.key);
+                if (!cat) continue;
+                if (!byCat[cat.id]) byCat[cat.id] = { ...cat, items: [] };
+                byCat[cat.id].items.push(s);
+            }
+
+            form.innerHTML = Object.values(byCat).map(cat => `
+                <div class="config-category" style="margin-bottom:12px;">
+                    <div class="config-cat-header" onclick="toggleCat('cat-${cat.id}')"
+                         style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+                                background:var(--bg-tertiary);border-radius:6px;cursor:pointer;
+                                font-size:13px;font-weight:600;user-select:none;">
+                        <span style="transition:transform 0.2s;" id="arrow-${cat.id}">▾</span>
+                        <span>${cat.icon}</span>
+                        <span>${cat.label}</span>
+                        <span style="margin-left:auto;font-size:11px;color:var(--text-secondary);">${cat.items.length}</span>
+                    </div>
+                    <div id="cat-${cat.id}" style="padding:8px 12px;display:flex;flex-direction:column;gap:8px;">
+                        ${cat.items.map(s => `
+                            <div class="form-group">
+                                <label>${s.label}</label>
+                                <input class="form-input" id="cfg-${s.key}" value="${s.current || s.default}" placeholder="${s.description}">
+                                <span class="form-hint">${s.description}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCat(id) {
+            const el = document.getElementById(id);
+            const arrow = document.getElementById('arrow-' + id.replace('cat-', ''));
+            if (el.style.display === 'none') {
+                el.style.display = 'flex';
+                arrow.style.transform = 'rotate(0deg)';
+            } else {
+                el.style.display = 'none';
+                arrow.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        async function saveConfig() {
+            const btn = document.querySelector('#tab-config .btn-primary');
+            btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+            const result = document.getElementById('configResult');
+            const params = {};
+            document.querySelectorAll('#configForm .form-input').forEach(inp => {
+                params[inp.id.replace('cfg-', '')] = inp.value;
+            });
+            try {
+                const r = await fetch(API + '/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ step_id: 'config', params })
+                });
+                const d = await r.json();
+                result.innerHTML = d.success
+                    ? '<div style="color:var(--accent-green);padding:8px;">✓ ' + d.output + '</div>'
+                    : '<div style="color:var(--accent-red);padding:8px;">✗ ' + (d.error || d.output) + '</div>';
+            } catch (e) {
+                result.innerHTML = '<div style="color:var(--accent-red);padding:8px;">Erreur: ' + e.message + '</div>';
+            }
+            btn.disabled = false; btn.textContent = '💾 Sauvegarder la config';
+        }
+
+        // ── Install steps ──
+        async function loadSteps() {
+            const container = document.getElementById('stepsContainer');
+            try {
+                const r = await fetch(API + '/steps');
+                const steps = await r.json();
+                container.innerHTML = steps.map(s => `
+                    <div class="step-item" id="step-${s.id}" onclick="runStep('${s.id}')">
+                        <div class="step-num">${s.id === 'venv' ? '1' : s.id === 'deps' ? '2' : s.id === 'deps_all' ? '3' : s.id === 'bun_deps' ? '4' : s.id === 'config' ? '5' : s.id === 'identity' ? '6' : s.id === 'test' ? '7' : s.id === 'api_keys' ? '8' : '?'}</div>
+                        <div class="step-info">
+                            <div class="step-name">${s.label} ${s.optional ? '<span style="font-size:10px;color:var(--text-secondary);">(optionnel)</span>' : ''}</div>
+                            <div class="step-desc">${s.description}</div>
+                        </div>
+                        <div class="step-status pending" id="status-${s.id}">en attente</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<div style="color:var(--accent-red);">Erreur: ${e.message}</div>`;
+            }
+        }
+
+        async function runStep(stepId) {
+            const statusEl = document.getElementById('status-' + stepId);
+            const stepEl = document.getElementById('step-' + stepId);
+            const outputCard = document.getElementById('outputCard');
+            const outputBox = document.getElementById('outputBox');
+            const outputTitle = document.getElementById('outputTitle');
+
+            statusEl.className = 'step-status running';
+            statusEl.textContent = '⏳ en cours';
+            stepEl.classList.add('active');
+
+            outputCard.style.display = 'block';
+            outputTitle.textContent = '📦 ' + stepId;
+            const logLine = document.createElement('div');
+            logLine.className = 'log-line info';
+            logLine.textContent = '→ Exécution de ' + stepId + '...';
+            outputBox.appendChild(logLine);
+            outputBox.scrollTop = outputBox.scrollHeight;
+
+            try {
+                const r = await fetch(API + '/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ step_id: stepId, params: {} })
+                });
+                const d = await r.json();
+
+                if (d.output) {
+                    const outLine = document.createElement('div');
+                    outLine.className = 'log-line ' + (d.success ? 'ok' : 'err');
+                    outLine.textContent = d.output;
+                    outputBox.appendChild(outLine);
+                }
+                if (d.error) {
+                    const errLine = document.createElement('div');
+                    errLine.className = 'log-line err';
+                    errLine.textContent = '✗ ' + d.error;
+                    outputBox.appendChild(errLine);
+                }
+
+                if (d.success) {
+                    statusEl.className = 'step-status done';
+                    statusEl.textContent = '✓ fait';
+                    stepEl.classList.add('completed');
+                    stepEl.classList.remove('active');
+                    const okLine = document.createElement('div');
+                    okLine.className = 'log-line ok';
+                    okLine.textContent = '✓ Terminé avec succès';
+                    outputBox.appendChild(okLine);
+                } else {
+                    statusEl.className = 'step-status pending';
+                    statusEl.textContent = '⚠ échec';
+                    stepEl.classList.remove('active');
+                }
+            } catch (e) {
+                statusEl.className = 'step-status pending';
+                statusEl.textContent = '⚠ erreur';
+                stepEl.classList.remove('active');
+                const errLine = document.createElement('div');
+                errLine.className = 'log-line err';
+                errLine.textContent = '✗ ' + e.message;
+                outputBox.appendChild(errLine);
+            }
+            outputBox.scrollTop = outputBox.scrollHeight;
+            updateProgress();
+        }
+
+        async function runAllSteps() {
+            const r = await fetch(API + '/steps');
+            const steps = await r.json();
+            for (const s of steps) {
+                await runStep(s.id);
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        function updateProgress() {
+            const total = document.querySelectorAll('.step-item').length;
+            const done = document.querySelectorAll('.step-item.completed').length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        // ── API Keys ──
+        async function loadKeysForm() {
+            const form = document.getElementById('keysForm');
+            try {
+                const r = await fetch(API + '/config-suggestions');
+                const suggestions = await r.json();
+                const keys = suggestions.filter(s => s.sensitive);
+                if (keys.length === 0) {
+                    form.innerHTML = '<div style="color:var(--text-secondary);padding:12px;">Aucune clé à configurer</div>';
+                    return;
+                }
+                form.innerHTML = keys.map(s => `
+                    <div class="form-group">
+                        <label>${s.label}</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input class="form-input" id="key-${s.key}" type="password" value="" placeholder="${s.description}" style="flex:1;">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleKeyVis('key-${s.key}')" style="flex-shrink:0;">👁️</button>
+                        </div>
+                        ${s.current ? '<span class="form-hint" style="color:var(--accent-green);">✓ déjà configurée</span>' : '<span class="form-hint">' + s.description + '</span>'}
+                    </div>
+                `).join('');
+            } catch (e) {
+                form.innerHTML = `<div style="color:var(--accent-red);">Erreur: ${e.message}</div>`;
+            }
+        }
+
+        function toggleKeyVis(id) {
+            const inp = document.getElementById(id);
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        async function saveApiKeys() {
+            const btn = document.querySelector('#tab-keys .btn-primary');
+            btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+            const result = document.getElementById('keysResult');
+            const params = {};
+            document.querySelectorAll('#keysForm .form-input').forEach(inp => {
+                if (inp.value) params[inp.id.replace('key-', '')] = inp.value;
+            });
+            try {
+                const r = await fetch(API + '/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ step_id: 'api_keys', params })
+                });
+                const d = await r.json();
+                result.innerHTML = d.success
+                    ? '<div style="color:var(--accent-green);">✓ ' + d.output + '</div>'
+                    : '<div style="color:var(--accent-red);">✗ ' + (d.error || d.output) + '</div>';
+            } catch (e) {
+                result.innerHTML = '<div style="color:var(--accent-red);">Erreur: ' + e.message + '</div>';
+            }
+            btn.disabled = false; btn.textContent = '💾 Sauvegarder les clés';
+        }
+
+        // ── Init ──
+        runSystemChecks();
+        loadConfig();
+        loadSteps();
+        loadKeysForm();
+    </script>
+</body>
+</html>"""

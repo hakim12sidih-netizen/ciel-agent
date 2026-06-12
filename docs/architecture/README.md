@@ -79,7 +79,7 @@
 | **quantum** | QAOA, VQE, superposition de croyances | 4 (MANAS) |
 | **math** | Catégories, HoTT, géométrie informationnelle | 3 (CIEL) |
 | **interfaces** | CLI, TUI, voice, canvas, API, ACP | 1-3 |
-| **polyglot** | Bridge Rust/Go/C (héritage HYDRA) | 1+ |
+| **polyglot** | Bridge Rust/Go/C | 1+ |
 
 ## Communication inter-strates : Lingua Franca
 

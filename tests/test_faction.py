@@ -2,42 +2,42 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.faction import Faction, process
+from ciel.evolution.faction import FactionManager
 
 
-class TestFaction:
+class TestFactionManager:
     def test_create_faction(self):
-        f = Faction.create(leader_id="leader_1", specialties=["Master of Alpha"])
+        f = FactionManager.create(leader_id="leader_1", specialties=["Master of Alpha"])
         assert f.leader_id == "leader_1"
         assert f.id.startswith("fac_")
         assert f.prestige == 0.0
         assert f.resources == 100.0
 
     def test_create_default_specialties(self):
-        f = Faction.create(leader_id="leader_1")
+        f = FactionManager.create(leader_id="leader_1")
         assert f.leader_id == "leader_1"
 
     def test_create_different_titles(self):
         titles = set()
         for _ in range(50):
-            f = Faction.create(leader_id="l1")
+            f = FactionManager.create(leader_id="l1")
             titles.add(f.title)
         assert len(titles) > 1  # random titles
 
     def test_set_true_ai_leader(self):
-        f = Faction.create(leader_id="l1")
+        f = FactionManager.create(leader_id="l1")
         f.set_true_ai_leader("clone_42")
         assert f.leader_clone_id == "clone_42"
         assert "True AI Sovereign" in f.title
 
     def test_record_success(self):
-        f = Faction.create(leader_id="l1")
+        f = FactionManager.create(leader_id="l1")
         f.record_success(5.0)
         assert f.prestige == 5.0
         assert f.resources == 150.0
 
     def test_calculate_dominance(self):
-        f = Faction.create(leader_id="l1")
+        f = FactionManager.create(leader_id="l1")
         f.calculate_dominance(10)
         assert f.dominance == 0.0  # no adepts
 
@@ -47,7 +47,7 @@ class TestFaction:
         assert f.dominance == 0.6  # 3 out of 5
 
     def test_to_dict(self):
-        f = Faction.create(leader_id="l1", specialties=["Logic"])
+        f = FactionManager.create(leader_id="l1", specialties=["Logic"])
         d = f.to_dict()
         assert d["id"] == f.id
         assert d["name"] == f.name

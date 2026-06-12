@@ -1,378 +1,185 @@
+"""
+CIEL v∞.8 — DIMENSION LXIV : CIEL-ECONOMY.
+Marché cognitif interne — agents commercent, négocient, prospèrent.
+
+Concept : Économie interne basée sur les Cognitas (CG). Marchés :
+Skills, Données, Compute, Agents. Règulation macro-économique par
+CIEL (banque centrale). Spécialisation naturelle et innovation
+via investissement en R&D.
+"""
 from __future__ import annotations
 
 import math
 import random
-from collections import Counter
-from collections.abc import Callable
+import time
+import uuid
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
-
-class ResourceType(Enum):
-    ELECTRICITY = "electricity"
-    DATA = "data"
-    ATTENTION = "attention"
-    MEMORY = "memory"
-    COMPUTE = "compute"
+from ciel.evolution.leader_network import LeaderNetwork
 
 
 @dataclass(slots=True)
-class Resource:
-    rtype: ResourceType
-    amount: float = 0.0
-    unit: str = ""
+class CognitasAccount:
+    agent_id: str
+    balance: float = 1000.0
+    credit_score: float = 1.0
+    transactions: list[dict] = field(default_factory=list)
 
-    def __add__(self, other: Resource) -> Resource:
-        if self.rtype != other.rtype:
-            raise ValueError(f"cannot add {self.rtype} and {other.rtype}")
-        return Resource(self.rtype, self.amount + other.amount, self.unit)
-
-
-@dataclass(slots=True)
-class Bid:
-    module_id: str
-    expected_utility: float = 0.0
-    urgency: float = 0.0
-    cost: float = 0.0
-    resource: Resource | None = None
-
-    def priority(self) -> float:
-        if self.cost <= 0:
-            return 0.0
-        return self.expected_utility * self.urgency / self.cost
+    def to_dict(self) -> dict:
+        return {"agent_id": self.agent_id,
+                "balance": round(self.balance, 2),
+                "credit": round(self.credit_score, 3),
+                "tx_count": len(self.transactions)}
 
 
-class StorageTier(Enum):
-    CACHE = "cache"
-    RAM = "ram"
-    NVME = "nvme"
-    DNA = "dna"
+MARKET_TYPES = ("skills", "data", "compute", "agents")
 
 
 @dataclass(slots=True)
-class StoragePool:
-    tier: StorageTier
-    capacity: float = 0.0
-    used: float = 0.0
+class MarketOrder:
+    id: str
+    seller_id: str
+    buyer_id: str
+    market: str = "skills"
+    item: str = ""
+    price: float = 0.0
+    timestamp: float = 0.0
+    fulfilled: bool = False
 
-    def available(self) -> float:
-        return max(0.0, self.capacity - self.used)
-
-    def allocate(self, amount: float) -> bool:
-        if amount > self.available():
-            return False
-        self.used += amount
-        return True
-
-    def free(self, amount: float) -> None:
-        self.used = max(0.0, self.used - amount)
-
-    def utilization(self) -> float:
-        return self.used / max(self.capacity, 0.01)
-
-
-class Metabolism:
-    """Métabolisme computationnel — entrées, stockage, dépenses."""
-
-    def __init__(self):
-        self.pools: dict[StorageTier, StoragePool] = {
-            StorageTier.CACHE: StoragePool(StorageTier.CACHE, capacity=10.0),
-            StorageTier.RAM: StoragePool(StorageTier.RAM, capacity=100.0),
-            StorageTier.NVME: StoragePool(StorageTier.NVME, capacity=1000.0),
-            StorageTier.DNA: StoragePool(StorageTier.DNA, capacity=10000.0),
-        }
-        self._intake: dict[ResourceType, float] = Counter()
-        self._expenditure: dict[ResourceType, float] = Counter()
-        self.bmr: float = 1.0
-
-    def ingest(self, resource: Resource) -> None:
-        self._intake[resource.rtype] += resource.amount
-
-    def expend(self, resource: Resource) -> bool:
-        if self._intake[resource.rtype] < resource.amount:
-            return False
-        self._intake[resource.rtype] -= resource.amount
-        self._expenditure[resource.rtype] += resource.amount
-        return True
-
-    def store(self, tier: StorageTier, amount: float) -> bool:
-        return self.pools[tier].allocate(amount)
-
-    def retrieve(self, tier: StorageTier, amount: float) -> bool:
-        if self.pools[tier].used < amount:
-            return False
-        self.pools[tier].free(amount)
-        return True
-
-    def tick(self) -> dict[str, float]:
-        cost = self.bmr
-        pool = self.pools[StorageTier.CACHE]
-        if pool.used >= cost:
-            pool.free(cost)
-        return {"bmr_cost": cost, "cache_used": pool.used}
-
-    def get_stats(self) -> dict[str, Any]:
-        return {
-            "intake": dict(self._intake),
-            "expenditure": dict(self._expenditure),
-            "bmr": self.bmr,
-            "pools": {t.value: {"capacity": p.capacity, "used": p.used, "util": p.utilization()}
-                      for t, p in self.pools.items()},
-        }
-
-
-class VickreyAuction:
-    """Enchère de Vickrey — second-price sealed-bid."""
-
-    def __init__(self):
-        self._bids: list[Bid] = []
-        self._history: list[dict[str, Any]] = []
-
-    def submit(self, bid: Bid) -> None:
-        self._bids.append(bid)
-
-    def clear(self) -> list[dict[str, Any]]:
-        if not self._bids:
-            return []
-        sorted_bids = sorted(self._bids, key=lambda b: b.priority(), reverse=True)
-        winner = sorted_bids[0]
-        price = sorted_bids[1].priority() if len(sorted_bids) > 1 else winner.cost
-        result = {
-            "winner": winner.module_id,
-            "price": price,
-            "utility": winner.expected_utility,
-            "urgency": winner.urgency,
-        }
-        self._history.append(result)
-        self._bids.clear()
-        return [result]
-
-    def history(self) -> list[dict[str, Any]]:
-        return list(self._history)
-
-
-class ShapleyValue:
-    """Valeur de Shapley — contribution marginale moyenne."""
-
-    @staticmethod
-    def compute(contributions: dict[str, list[float]]) -> dict[str, float]:
-        players = list(contributions.keys())
-        n = len(players)
-        if n == 0:
-            return {}
-        shapley: dict[str, float] = {p: 0.0 for p in players}
-
-        from itertools import permutations
-        for perm in permutations(players):
-            cumulative = 0.0
-            for player in perm:
-                prev = cumulative
-                if contributions[player]:
-                    cumulative += contributions[player][-1]
-                else:
-                    cumulative += 0
-                marginal = cumulative - prev
-                shapley[player] += marginal
-
-        total_permutations = math.factorial(n)
-        for p in players:
-            shapley[p] /= total_permutations
-        return shapley
-
-
-class Token:
-    """Token — unité de valeur économique interne."""
-
-    def __init__(self, name: str = "CIEL", total_supply: float = 1_000_000):
-        self.name = name
-        self.total_supply = total_supply
-        self.circulating: float = 0.0
-        self._balances: dict[str, float] = {}
-
-    def mint(self, recipient: str, amount: float) -> bool:
-        if self.circulating + amount > self.total_supply:
-            return False
-        self._balances[recipient] = self._balances.get(recipient, 0.0) + amount
-        self.circulating += amount
-        return True
-
-    def transfer(self, sender: str, recipient: str, amount: float) -> bool:
-        if self._balances.get(sender, 0.0) < amount:
-            return False
-        self._balances[sender] -= amount
-        self._balances[recipient] = self._balances.get(recipient, 0.0) + amount
-        return True
-
-    def balance(self, owner: str) -> float:
-        return self._balances.get(owner, 0.0)
-
-    def supply_remaining(self) -> float:
-        return self.total_supply - self.circulating
-
-
-class Market:
-    """Marché interne — offre, demande, prix."""
-
-    def __init__(self):
-        self._asks: dict[str, float] = {}
-        self._bids: dict[str, float] = {}
-        self._trades: list[dict[str, Any]] = []
-
-    def ask(self, item: str, price: float) -> None:
-        self._asks[item] = price
-
-    def bid(self, item: str, price: float) -> None:
-        self._bids[item] = price
-
-    def trade(self, item: str) -> dict[str, Any] | None:
-        if item not in self._asks or item not in self._bids:
-            return None
-        ask_price = self._asks[item]
-        bid_price = self._bids[item]
-        if bid_price < ask_price:
-            return None
-        price = (ask_price + bid_price) / 2
-        trade = {"item": item, "price": price, "volume": 1}
-        self._trades.append(trade)
-        del self._asks[item]
-        del self._bids[item]
-        return trade
-
-    def market_price(self, item: str) -> float | None:
-        relevant = [t["price"] for t in self._trades if t["item"] == item]
-        if not relevant:
-            return None
-        if item in self._asks:
-            return self._asks[item]
-        if item in self._bids:
-            return self._bids[item]
-        return sum(relevant) / len(relevant)
-
-    def trade_count(self) -> int:
-        return len(self._trades)
+    def to_dict(self) -> dict:
+        return {"id": self.id, "seller": self.seller_id,
+                "buyer": self.buyer_id, "market": self.market,
+                "price": self.price, "fulfilled": self.fulfilled}
 
 
 class EconomyEngine:
-    """Moteur économique — métabolisme, enchères, Shapley, tokens, marché."""
+    """Moteur du marché économique cognitif interne.
+
+    4 marchés : Skills, Données, Compute, Agents.
+    Monnaie : Cognitas (CG). Règulation macro-économique.
+    """
 
     def __init__(self):
-        self.metabolism = Metabolism()
-        self.auction = VickreyAuction()
-        self.shapley = ShapleyValue()
-        self.token = Token()
-        self.market = Market()
-        self._agents: dict[str, float] = {}
+        self.accounts: dict[str, CognitasAccount] = {}
+        self.orders: list[MarketOrder] = []
+        self.gdp: float = 0.0
+        self.money_supply: float = 0.0
+        self.inflation_rate: float = 0.0
+        self.network = LeaderNetwork()
+        self._init_accounts()
 
-    def register_agent(self, agent_id: str, initial_balance: float = 100.0) -> None:
-        self._agents[agent_id] = initial_balance
-        self.token.mint(agent_id, initial_balance)
+    def _init_accounts(self):
+        for agent in ["RAPHAEL", "FORGE", "CHRONOS", "SOEI",
+                       "SHION", "BENIMARU", "DIABLO"]:
+            self.register_agent(agent)
 
-    def submit_bid(self, module_id: str, utility: float, urgency: float, cost: float) -> bool:
-        bid = Bid(module_id=module_id, expected_utility=utility, urgency=urgency, cost=cost)
-        self.auction.submit(bid)
-        return True
+    def register_agent(self, agent_id: str,
+                       initial_balance: float = 1000.0) -> CognitasAccount:
+        acct = CognitasAccount(agent_id=agent_id, balance=initial_balance)
+        self.accounts[agent_id] = acct
+        self.money_supply += initial_balance
+        return acct
 
-    def clear_auction(self) -> list[dict[str, Any]]:
-        return self.auction.clear()
+    def trade(self, seller_id: str, buyer_id: str,
+              market: str = "skills", item: str = "",
+              price: float = 10.0) -> MarketOrder | None:
+        seller = self.accounts.get(seller_id)
+        buyer = self.accounts.get(buyer_id)
+        if not seller or not buyer:
+            return None
+        if buyer.balance < price:
+            return None
+        order = MarketOrder(
+            id=f"ORD-{uuid.uuid4().hex[:12]}",
+            seller_id=seller_id, buyer_id=buyer_id,
+            market=market, item=item, price=price,
+            timestamp=time.time(), fulfilled=True,
+        )
+        buyer.balance -= price
+        seller.balance += price
+        self.orders.append(order)
+        self.gdp += price
+        seller.transactions.append({"type": "sell", "price": price,
+                                    "buyer": buyer_id, "market": market})
+        buyer.transactions.append({"type": "buy", "price": price,
+                                   "seller": seller_id, "market": market})
+        return order
 
-    def compute_shapley(self, contributions: dict[str, list[float]]) -> dict[str, float]:
-        return self.shapley.compute(contributions)
+    def regulate(self) -> dict:
+        if self.gdp > 10000 and self.money_supply > 50000:
+            self.inflation_rate = min(0.1, self.inflation_rate + 0.01)
+            tax = self.gdp * 0.05
+            for acct in self.accounts.values():
+                acct.balance *= 0.99  # QE inversé
+            self.money_supply -= tax
+            return {"action": "contraction", "tax": round(tax, 2)}
+        elif self.gdp < 1000:
+            self.inflation_rate = max(-0.02, self.inflation_rate - 0.01)
+            stimulus = 500.0
+            for acct in self.accounts.values():
+                acct.balance += 50.0
+            self.money_supply += stimulus
+            return {"action": "stimulus", "amount": stimulus}
+        return {"action": "stable", "inflation": round(self.inflation_rate, 4)}
 
-    def ingest(self, rtype: str, amount: float) -> None:
-        try:
-            rt = ResourceType(rtype)
-            self.metabolism.ingest(Resource(rt, amount))
-        except ValueError:
-            pass
+    def market_prices(self) -> dict:
+        prices = {}
+        for m in MARKET_TYPES:
+            m_orders = [o for o in self.orders if o.market == m]
+            if m_orders:
+                prices[m] = round(sum(o.price for o in m_orders) /
+                                  len(m_orders), 2)
+            else:
+                prices[m] = 10.0
+        return prices
 
-    def store(self, tier: str, amount: float) -> bool:
-        try:
-            t = StorageTier(tier)
-            return self.metabolism.store(t, amount)
-        except ValueError:
-            return False
-
-    def trade(self, item: str, price: float, side: str = "ask") -> dict[str, Any] | None:
-        if side == "ask":
-            self.market.ask(item, price)
-        else:
-            self.market.bid(item, price)
-        return self.market.trade(item)
-
-    def transfer_token(self, sender: str, recipient: str, amount: float) -> bool:
-        return self.token.transfer(sender, recipient, amount)
-
-    def get_stats(self) -> dict[str, Any]:
+    def wealth_distribution(self) -> dict:
+        balances = [acct.balance for acct in self.accounts.values()]
+        if not balances:
+            return {}
         return {
-            "metabolism": self.metabolism.get_stats(),
-            "auctions": len(self.auction.history()),
-            "agents": len(self._agents),
-            "token_circulating": self.token.circulating,
-            "token_supply_remaining": self.token.supply_remaining(),
-            "trades": self.market.trade_count(),
+            "total": round(sum(balances), 2),
+            "mean": round(sum(balances) / len(balances), 2),
+            "max": round(max(balances), 2),
+            "min": round(min(balances), 2),
+            "gdp": round(self.gdp, 2),
         }
 
-    def process(self, input_data: Any) -> dict[str, Any]:
-        if not isinstance(input_data, dict):
-            return {"success": False, "error": "input must be dict"}
+    def get_stats(self) -> dict:
+        return {
+            "agents": len(self.accounts),
+            "transactions": len(self.orders),
+            "gdp": round(self.gdp, 2),
+            "money_supply": round(self.money_supply, 2),
+            "inflation": round(self.inflation_rate, 4),
+        }
 
-        action = input_data.get("action", "stats")
-        data = {k: v for k, v in input_data.items() if k != "action"}
-
+    def process(self, input_data: dict) -> dict:
+        action = input_data.get("action", "status")
         if action == "register":
-            agent = str(data.get("agent", "anon"))
-            balance = float(data.get("balance", 100.0))
-            self.register_agent(agent, balance)
-            return {"success": True, "action": "register", "agent": agent, "balance": balance}
-
-        elif action == "bid":
-            self.submit_bid(
-                str(data.get("module", "default")),
-                float(data.get("utility", 0.5)),
-                float(data.get("urgency", 0.5)),
-                float(data.get("cost", 0.1)),
+            a = self.register_agent(
+                input_data.get("agent", "?"),
+                input_data.get("balance", 1000.0),
             )
-            return {"success": True, "action": "bid"}
-
-        elif action == "clear":
-            results = self.clear_auction()
-            return {"success": True, "action": "clear", "results": results}
-
-        elif action == "shapley":
-            contributions = data.get("contributions", {})
-            values = self.compute_shapley(contributions)
-            return {"success": True, "action": "shapley", "values": values}
-
-        elif action == "ingest":
-            self.ingest(str(data.get("type", "electricity")), float(data.get("amount", 1.0)))
-            return {"success": True, "action": "ingest"}
-
-        elif action == "store":
-            ok = self.store(str(data.get("tier", "cache")), float(data.get("amount", 1.0)))
-            return {"success": True, "action": "store", "stored": ok}
-
+            return {"status": "ok", "account": a.to_dict()}
         elif action == "trade":
-            result = self.trade(
-                str(data.get("item", "compute")),
-                float(data.get("price", 1.0)),
-                str(data.get("side", "ask")),
+            o = self.trade(
+                input_data.get("seller", ""),
+                input_data.get("buyer", ""),
+                input_data.get("market", "skills"),
+                input_data.get("item", ""),
+                input_data.get("price", 10.0),
             )
-            return {"success": True, "action": "trade", "trade": result}
-
-        elif action == "transfer":
-            ok = self.transfer_token(
-                str(data.get("sender", "")),
-                str(data.get("recipient", "")),
-                float(data.get("amount", 0.0)),
-            )
-            return {"success": True, "action": "transfer", "ok": ok}
-
-        elif action == "tick":
-            result = self.metabolism.tick()
-            return {"success": True, "action": "tick", "result": result}
-
-        elif action == "stats":
-            return {"success": True, "action": "stats", "stats": self.get_stats()}
-
-        return {"success": False, "error": f"unknown action '{action}'"}
+            return {"status": "ok" if o else "error",
+                    "order": o.to_dict() if o else None}
+        elif action == "regulate":
+            return {"status": "ok",
+                    "regulation": self.regulate()}
+        elif action == "prices":
+            return {"status": "ok",
+                    "prices": self.market_prices()}
+        elif action == "wealth":
+            return {"status": "ok",
+                    "wealth": self.wealth_distribution()}
+        return {"status": "ok", "agents": len(self.accounts)}

@@ -158,8 +158,8 @@ class TestSmokeCLI:
             capture_output=True, text=True, timeout=5,
         )
         assert r.returncode == 0
-        assert "0.1.0" in r.stdout
-        assert "ÉVEIL" in r.stdout
+        assert "1.0.0" in r.stdout
+        assert "TRANSCENDANCE" in r.stdout
 
     def test_main_axioms(self) -> None:
         """main.py axioms affiche les 4 axiomes."""

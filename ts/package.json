@@ -1,0 +1,27 @@
+{
+  "name": "@ciel/ts-core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests/"
+  },
+  "dependencies": {
+    "ink": "^4.4.1",
+    "react": "^18.3.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "zod": "^3.23.8",
+    "rxjs": "^7.8.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.3",
+    "typescript": "^5.5.0"
+  }
+}

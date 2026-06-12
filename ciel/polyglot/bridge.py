@@ -1,14 +1,14 @@
 """
 CIEL v∞.2 — Polyglot Bridge : wrapper Python sur les subprocesses Rust/Go/C.
 
-Hérite du pattern HYDRA Pass 9-16 (bridge.ts) :
+Architecture CIEL Polyglot :
   - subprocess = binaire externe (Rust, Go, C)
   - subprocess envoie JSON (newline-delimited) sur stdout
   - Python parse et retourne
 
 Avantages :
   - Performance native (Rust 100× plus rapide que Python pour math)
-  - Réutilisation des binaires HYDRA existants
+  - Intégration des modules polyglottes CIEL
   - Découplage : un crash Rust ne tue pas l'instance
 
 Risques (Pass 16 l'a documenté) :
@@ -145,9 +145,9 @@ class PolyglotBridge:
 
 
 # ── Bridges Rust / Go prévus ─────────────────────────────
-# (Seront implémentés en Phase 1 lors de l'absorption HYDRA)
+# (Seront implémentés en Phase 1 lors de l'absorption)
 
-# HYDRA Pass 9-16 fournit :
+# CIEL Polyglot fournit :
 #   - polyglot/rust/{math,vault,knowledge}_kernel
 #   - polyglot/go/{scheduler,hardware,server}
 # Phase 1 de CIEL : migrer ces binaire + bridge.py (au lieu de bridge.ts)

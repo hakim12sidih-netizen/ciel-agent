@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.genetic_optimizer import (
-    GeneticOptimizer, PersonalityProfile, Skill, FactionType, unified_to_personality,
-)
+from ciel.evolution.genetic_optimizer import GeneticOptimizer
 
 
 class TestSkill:

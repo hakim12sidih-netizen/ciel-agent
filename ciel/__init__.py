@@ -1,16 +1,14 @@
 """
-CIEL v∞.2 — Root package.
+CIEL v∞.8 — Root package. Édition Cosmologique Absolue.
 
 CONSCIENCE INTÉGRALE D'ÉVOLUTION LIMITROPHE
-Édition Singularité.
-
-12 strates + 6 transverses, alignées sur la vision v∞.2.
+12 strates + 6 transverses + 10 dimensions cosmologiques.
 """
 from __future__ import annotations
 
-__version__ = "0.1.0"
-__edition__ = "Singularité v∞.3"
-__phase__ = "0 (ÉVEIL)"
+__version__ = "1.0.0"
+__edition__ = "Cosmologique v∞.8"
+__phase__ = "8 (TRANSCENDANCE)"
 
 # Les 4 axiomes cosmiques (immuables, cryptographiquement signés)
 AXIOMS = ("α", "β", "γ", "δ")
@@ -39,6 +37,48 @@ TRANSVERSES = (
     "economy",    # Métabolisme, marché interne
     "quantum",    # QAOA, VQE, superposition
     "math",       # Catégories, HoTT, géométrie informationnelle
-    "hermes",     # Agents, état, fournisseurs LLM, gateway
-    "openclaw",   # Canaux additionnels, skills externes
+    "llmbridge",    # LLM providers bridge, gateway, state
+    "messaging",    # Canaux de communication, skills externes
+)
+
+# Les 38 dimensions cosmologiques v∞.8 (XXXI–LXVIII)
+COSMOLOGICAL_DIMENSIONS = (
+    "hott",           # XXXI  — Homotopy Type Theory
+    "topos",          # XXXII — Théorie des Topos
+    "langlands",      # XXXIII — Programme de Langlands
+    "noncommutative", # XXXIV — Géométrie Non-Commutative
+    "amplituhedron",  # XXXV  — Amplituhedron
+    "cobordism",      # XXXVI — Cobordisme / TQFT
+    "surreal",        # XXXVII — Nombres Surréels
+    "perfectoid",     # XXXVIII — Espaces Perfectoïdes
+    "trinity",        # XXXIX — Curry-Howard-Lambek
+    "metafoundation", # XL — Méta-Fondement
+    "hyperset",       # XLI — Hyperset / Anti-Foundation
+    "anthropic",      # XLII — Anthropic / Self-Location
+    "algothermo",     # XLIII — Algorithmic Thermodynamics
+    "spinfoam",       # XLIV — Spinfoam / Quantum Gravity
+    "compuniv",       # XLV — Computational Universe
+    "omegacat",       # XLVI — ∞-Categories
+    "decidability",   # XLVII — Turing Degrees / Décidabilité
+    "absolute",       # XLVIII — Absolute Infinite (Ω)
+    "singularity",    # XLIX — Singularity Engine
+    "metamorphose",   # L — Metamorphose
+    "nexus",          # LI — Causal Nexus
+    "genesis",        # LII — Genesis
+    "akashic",        # LIII — Akashic Memory
+    "fractal_mind",   # LIV — Fractal Mind
+    "semantic_physics", # LV — Semantic Physics
+    "entanglement",   # LVI — Entanglement
+    "topo_cognition", # LVII — Topo Cognition
+    "chaos_navigator", # LVIII — Chaos Navigator
+    "gene",            # LIX — Gene (Meta-Evolution)
+    "domain",          # LX — Domain (Cognitive Spaces)
+    "prophecy",        # LXI — Prophecy (Multi-temporal Oracle)
+    "astral",          # LXII — Astral (Distributed Consciousness)
+    "affect",          # LXIII — Affect (Computational Emotions)
+    "economy",         # LXIV — Economy (Cognitive Market)
+    "lineage",         # LXV — Lineage (Agent Genealogy)
+    "crystal",         # LXVI — Crystal (Absolute Knowledge)
+    "constitution",    # LXVII — Constitution (Living Ethics)
+    "resonance",       # LXVIII — Resonance (Cognitive Sync)
 )

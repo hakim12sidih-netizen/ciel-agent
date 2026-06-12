@@ -4,10 +4,8 @@ from __future__ import annotations
 import pytest
 import time
 
-from ciel.evolution.metamorphic_core import (
-    MetamorphicCore, ArchitecturalGene, TransmutationProposal,
-    RiskLevel, TransmutationStatus,
-)
+from ciel.evolution.metamorphic_core import MetamorphicCore
+from ciel.evolution.llm_transmuter import TransmutationProposal
 
 
 class TestArchitecturalGene:

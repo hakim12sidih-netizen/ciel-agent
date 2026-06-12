@@ -6,8 +6,8 @@ import tempfile
 
 import pytest
 
-from ciel.evolution.llm_transmuter import LLMTransmuter, TransmutationResult, ArchitecturalGene
-from ciel.evolution.transmutation_budget import TransmutationBudget, BudgetConfig
+from ciel.evolution.llm_transmuter import LLMTransmuter, TransmutationProposal
+from ciel.evolution.transmutation_budget import TransmutationBudget
 
 
 def _make_evol_file(content: str = "x = 1\n") -> str:

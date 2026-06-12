@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ciel.evolution.unified_genome import (
-    UnifiedGenome, UnifiedGenomeParams, Gene, ChromosomeType,
-    EpigeneticMarker, KarmicRecord, ShadowProfile, ResonanceSignature,
-)
+from ciel.evolution.unified_genome import UnifiedGenome, Gene, GenomeMode, GeneCategory
 
 
 class TestGene:

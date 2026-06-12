@@ -1,171 +1,173 @@
+"""
+CIEL v1.0 — GeneticOptimizer : opérateurs génétiques avancés.
+
+Migré depuis Hydra (CRISPR_Titan), adapté pour CIEL.
+Fournit 5 stratégies de mutation :
+  - gaussian    : bruit gaussien
+  - epigenetic  : changements corrélés
+  - transposon  : sauts de gènes
+  - bricolage   : réarrangement
+  - sacrifice   : réinitialisation ciblée
+"""
 from __future__ import annotations
 
-import random
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
+import secrets
+import statistics
+from dataclasses import dataclass
+from typing import Callable
 
-
-class FactionType(Enum):
-    WARRIORS = "warriors"
-    SAGES = "sages"
-    EXPLORERS = "explorers"
-    ROYAL_BLOOD = "royal_blood"
-    SPECTRES = "spectres"
-
-
-@dataclass(slots=True)
-class Skill:
-    id: str = ""
-    power: float = 0.0
-    is_sealed: bool = False
-
-
-@dataclass(slots=True)
-class PersonalityProfile:
-    id: str = ""
-    velocity: float = 0.5
-    precision: float = 0.5
-    dominance: float = 0.5
-    empathy: float = 0.5
-    stealth: float = 0.5
-    skills: list[Skill] = field(default_factory=list)
-    generation: int = 0
-    lineage_id: str = ""
-
-
-def unified_to_personality(g: Any) -> PersonalityProfile:
-    phen = {}
-    if hasattr(g, "get_phenotype"):
-        phen = g.get_phenotype()
-    return PersonalityProfile(
-        id=getattr(g, "id", ""),
-        velocity=phen.get("exploration_rate", 0.5),
-        precision=1.0 - phen.get("risk_tolerance", 0.5),
-        dominance=phen.get("creativity_index", 0.5),
-        empathy=phen.get("collaboration_drive", 0.5),
-        stealth=1.0 - phen.get("exploration_rate", 0.5),
-        generation=getattr(g, "generation", 0),
-        lineage_id=getattr(g, "faction_id", ""),
-    )
+from ciel.evolution.unified_genome import UnifiedGenome, Gene
 
 
 class GeneticOptimizer:
-    def __init__(self) -> None:
-        self._agent_genomes: dict[str, PersonalityProfile] = {}
-        self._initialize_genomes()
+    """Opérateurs génétiques pour l'évolution CIEL."""
 
-    def _initialize_genomes(self) -> None:
-        default = PersonalityProfile(velocity=0.5, precision=0.8, dominance=0.5, empathy=0.7, stealth=0.5)
-        self._agent_genomes["zeus"] = PersonalityProfile(
-            velocity=default.velocity, precision=default.precision,
-            dominance=1.0, empathy=default.empathy, stealth=default.stealth,
-        )
-        self._agent_genomes["athena"] = PersonalityProfile(
-            velocity=default.velocity, precision=1.0,
-            dominance=default.dominance, empathy=default.empathy, stealth=default.stealth,
-        )
-        self._agent_genomes["hydra_ui"] = PersonalityProfile(
-            velocity=1.0, precision=default.precision,
-            dominance=default.dominance, empathy=default.empathy, stealth=0.8,
-        )
-        self._agent_genomes["erebus"] = PersonalityProfile(
-            id="erebus", velocity=default.velocity,
-            precision=0.9, dominance=default.dominance,
-            empathy=default.empathy, stealth=1.0,
-        )
+    MUTATION_STRATEGIES = {
+        "gaussian": "bruit gaussien",
+        "epigenetic": "changements corrélés",
+        "transposon": "sauts de gènes",
+        "bricolage": "réarrangement",
+        "sacrifice": "réinitialisation ciblée",
+    }
 
-    async def absorb_into(self, survivor: Any, victim: Any) -> None:
-        if survivor is None or victim is None:
-            return
-        victim_genes = getattr(victim, "g_behavior", [])
-        if not victim_genes:
-            return
-        victim_gene = random.choice(victim_genes)
-        survivor_genes = getattr(survivor, "g_behavior", [])
-        if not survivor_genes:
-            return
-        survivor_gene = random.choice(survivor_genes)
-        survivor_gene.value = victim_gene.value
-        if hasattr(survivor, "mutate"):
-            survivor.mutate(0.05)
+    def mutate(self, genome: UnifiedGenome, strategy: str = "gaussian", rate: float = 0.15) -> UnifiedGenome:
+        if strategy == "epigenetic":
+            return self._epigenetic_mutate(genome, rate)
+        elif strategy == "transposon":
+            return self._transposon_mutate(genome, rate)
+        elif strategy == "bricolage":
+            return self._bricolage_mutate(genome, rate)
+        elif strategy == "sacrifice":
+            return self._sacrifice_mutate(genome, rate)
+        else:
+            return genome.mutate(rate, "gaussian")
 
-    def generate_heirs_from(self, chief: Any, partner: Any) -> list[Any]:
-        if chief is None or partner is None:
-            return []
-        heirs: list[Any] = []
-        for i in range(2):
-            if hasattr(chief, "crossover"):
-                heir = chief.crossover(partner)
-                heir.agent_name = f"{getattr(chief, 'agent_name', 'unknown')}_heir_{i}_gen{getattr(chief, 'generation', 0) + 1}"
-                heir.generation = max(getattr(chief, "generation", 0), getattr(partner, "generation", 0)) + 1
-                if hasattr(heir, "faction_id"):
-                    heir.faction_id = getattr(chief, "faction_id", None)
-                if hasattr(heir, "mutate"):
-                    heir.mutate(0.15)
-                heirs.append(heir)
-        return heirs
-
-    def generate_heirs(self, chief_id: str, partner_id: str) -> list[PersonalityProfile]:
-        chief = self._agent_genomes.get(chief_id)
-        partner = self._agent_genomes.get(partner_id)
-        if chief is None or partner is None:
-            return []
-        heirs: list[PersonalityProfile] = []
-        for _ in range(2):
-            heirs.append(PersonalityProfile(
-                velocity=(chief.velocity + partner.velocity) / 2 + (random.random() - 0.5) * 0.1,
-                precision=(chief.precision + partner.precision) / 2 + (random.random() - 0.5) * 0.1,
-                dominance=chief.dominance,
-                empathy=partner.empathy,
-                stealth=(chief.stealth + partner.stealth) / 2,
-                skills=[s for s in chief.skills if s.is_sealed][:2],
-                generation=chief.generation + 1,
-                lineage_id=chief_id,
-            ))
-        return heirs
-
-    def elect_patron(self, faction: FactionType, avg_genome: PersonalityProfile) -> str:
-        scores = {
-            "athena": avg_genome.precision * 1.5 + avg_genome.velocity * 0.5,
-            "hermes": avg_genome.velocity * 1.5 + avg_genome.empathy * 0.5,
-            "zeus": avg_genome.dominance * 1.5 + avg_genome.precision * 0.5,
-        }
-        elected = max(scores, key=scores.get)
-        return elected
-
-    async def mutate_faction(
-        self,
-        faction: FactionType,
-        trait: str,
-        intensity: float,
-        population: list[Any] | None = None,
-    ) -> dict[str, Any]:
-        if population is None:
-            population = []
-        mutated = 0
-        for genome in population:
-            if hasattr(genome, "mutate_by_strategy"):
-                strategy = self._pick_strategy_for_faction(faction)
-                behavior = getattr(genome, "g_behavior", [])
-                if behavior:
-                    await genome.mutate_by_strategy(
-                        random.randint(0, len(behavior) - 1),
-                        "BEHAVIOR",
-                        strategy,
+    def _epigenetic_mutate(self, genome: UnifiedGenome, rate: float) -> UnifiedGenome:
+        """Mutation épigénétique : les gènes voisins mutent ensemble."""
+        new_genes = list(genome.genes)
+        if not new_genes:
+            return genome
+        num_clusters = max(1, len(new_genes) // 8)
+        cluster_size = len(new_genes) // num_clusters
+        for c in range(num_clusters):
+            if secrets.randbelow(1000) / 1000 < rate:
+                start = c * cluster_size
+                end = min(start + cluster_size, len(new_genes))
+                shift = (secrets.randbelow(200) - 100) / 100 * 0.2
+                for i in range(start, end):
+                    old = new_genes[i]
+                    new_val = max(old.min_value, min(old.max_value, old.value + shift))
+                    new_genes[i] = Gene(
+                        name=old.name, category=old.category, value=round(new_val, 6),
+                        min_value=old.min_value, max_value=old.max_value,
                     )
-                    mutated += 1
-        return {"status": "applied", "count": mutated, "faction": faction.value}
+        return UnifiedGenome(
+            genome_id=f"{genome.genome_id}-EPI",
+            mode=genome.mode, genes=new_genes,
+            parent_ids=[genome.genome_id],
+            generation=genome.generation + 1,
+        )
 
-    def _pick_strategy_for_faction(self, faction: FactionType) -> str:
-        mapping = {
-            FactionType.WARRIORS: "sacrifice",
-            FactionType.SAGES: "epigenetic",
-            FactionType.EXPLORERS: "transposon",
-            FactionType.ROYAL_BLOOD: "bricolage",
-            FactionType.SPECTRES: "gaussian",
-        }
-        return mapping.get(faction, "gaussian")
+    def _transposon_mutate(self, genome: UnifiedGenome, rate: float) -> UnifiedGenome:
+        """Mutation transposon : échange deux blocs de gènes."""
+        new_genes = list(genome.genes)
+        n = len(new_genes)
+        if n < 4:
+            return genome.mutate(rate, "gaussian")
+        if secrets.randbelow(1000) / 1000 >= rate:
+            return genome.mutate(rate, "gaussian")
 
-    def process(self, input_data: Any) -> dict[str, Any]:
-        return {"optimizer": "GeneticOptimizer", "profiles": list(self._agent_genomes.keys())}
+        pos1 = secrets.randbelow(n // 2)
+        pos2 = secrets.randbelow(n // 2) + n // 2
+        size = secrets.randbelow(min(8, n // 4)) + 1
+        end1 = min(pos1 + size, n)
+        end2 = min(pos2 + size, n)
+        segment1 = new_genes[pos1:end1]
+        segment2 = new_genes[pos2:end2]
+        new_genes[pos1:end1] = segment2
+        new_genes[pos2:end2] = segment1
+        return UnifiedGenome(
+            genome_id=f"{genome.genome_id}-TNP",
+            mode=genome.mode, genes=new_genes,
+            parent_ids=[genome.genome_id],
+            generation=genome.generation + 1,
+        )
+
+    def _bricolage_mutate(self, genome: UnifiedGenome, rate: float) -> UnifiedGenome:
+        """Mutation bricolage : réarrange l'ordre des gènes."""
+        new_genes = list(genome.genes)
+        n = len(new_genes)
+        if n < 3:
+            return genome.mutate(rate, "gaussian")
+        if secrets.randbelow(1000) / 1000 >= rate:
+            return genome.mutate(rate, "gaussian")
+        # Réarrange par catégorie
+        categories = {}
+        for g in new_genes:
+            categories.setdefault(g.category, []).append(g)
+        rearranged = []
+        cat_list = list(categories.values())
+        for cat_genes in cat_list:
+            start = secrets.randbelow(len(cat_genes))
+            cat_genes = cat_genes[start:] + cat_genes[:start]
+            rearranged.extend(cat_genes)
+        return UnifiedGenome(
+            genome_id=f"{genome.genome_id}-BRC",
+            mode=genome.mode, genes=rearranged,
+            parent_ids=[genome.genome_id],
+            generation=genome.generation + 1,
+        )
+
+    def _sacrifice_mutate(self, genome: UnifiedGenome, rate: float) -> UnifiedGenome:
+        """Mutation sacrifice : réinitialise les gènes les plus faibles."""
+        new_genes = list(genome.genes)
+        if not new_genes:
+            return genome
+        # Trouve le gène avec la valeur la plus extrême et le réinitialise
+        extreme = max(new_genes, key=lambda g: abs(g.value - 0.5))
+        idx = new_genes.index(extreme)
+        old = new_genes[idx]
+        new_genes[idx] = Gene(
+            name=old.name, category=old.category, value=0.5,
+            min_value=old.min_value, max_value=old.max_value,
+        )
+        return UnifiedGenome(
+            genome_id=f"{genome.genome_id}-SAC",
+            mode=genome.mode, genes=new_genes,
+            parent_ids=[genome.genome_id],
+            generation=genome.generation + 1,
+        )
+
+    def crossover(
+        self, parent1: UnifiedGenome, parent2: UnifiedGenome
+    ) -> tuple[UnifiedGenome, UnifiedGenome]:
+        """Croisement standard avec point de coupure aléatoire."""
+        return parent1.crossover(parent2)
+
+    def uniform_crossover(
+        self, parent1: UnifiedGenome, parent2: UnifiedGenome
+    ) -> tuple[UnifiedGenome, UnifiedGenome]:
+        """Croisement uniforme : chaque gène a 50% chance de venir de chaque parent."""
+        child1_genes = []
+        child2_genes = []
+        for g1, g2 in zip(parent1.genes, parent2.genes):
+            if secrets.randbelow(2):
+                child1_genes.append(g1)
+                child2_genes.append(g2)
+            else:
+                child1_genes.append(g2)
+                child2_genes.append(g1)
+        return (
+            UnifiedGenome(
+                genome_id=f"{parent1.genome_id}-U1",
+                mode=parent1.mode, genes=child1_genes,
+                parent_ids=[parent1.genome_id, parent2.genome_id],
+                generation=max(parent1.generation, parent2.generation) + 1,
+            ),
+            UnifiedGenome(
+                genome_id=f"{parent2.genome_id}-U2",
+                mode=parent2.mode, genes=child2_genes,
+                parent_ids=[parent1.genome_id, parent2.genome_id],
+                generation=max(parent1.generation, parent2.generation) + 1,
+            ),
+        )

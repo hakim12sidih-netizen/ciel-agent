@@ -13,9 +13,9 @@ dans CIEL. Chaque ADR suit le format :
 
 | ID | Titre | Statut |
 |----|-------|--------|
-| (à venir) | Absorption HYDRA | Proposé |
-| (à venir) | Absorption Hermes Agent | Proposé |
-| (à venir) | Absorption OpenClaw | Proposé |
+| (absorbé) | Absorption HYDRA | Accepté |
+| (absorbé) | Absorption Hermes Agent | Accepté |
+| (absorbé) | Absorption OpenClaw | Accepté |
 | (à venir) | Stratégie polyglot Rust/Go | Proposé |
 
 ## Principes d'absorption
@@ -27,5 +27,5 @@ dans CIEL. Chaque ADR suit le format :
    sans avoir été ré-écrite selon nos standards (types stricts,
    async, pydantic, etc.)
 4. **Documente les rejets** : expliquer ce qu'on jette et pourquoi
-5. **Compatibilité ascendante** : un user de HYDRA peut migrer
+5. **Compatibilité ascendante** : un utilisateur peut migrer
    sans douleur (mêmes APIs, mêmes CLI args)

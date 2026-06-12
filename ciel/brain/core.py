@@ -47,7 +47,7 @@ from ciel.evolution.research_daemon import ResearchDaemon
 from ciel.evolution.torch_rl_bridge import TorchRLBridge
 from ciel.evolution.transmutation_budget import TransmutationBudget
 from ciel.forge.core import ForgeEngine
-from ciel.hermes.core import HermesEngine
+from ciel.llmbridge.core import LLMBridgeEngine
 from ciel.interfaces.core import InterfacesEngine
 from ciel.logos.core import LogosEngine
 from ciel.math.core import MathEngine
@@ -56,7 +56,7 @@ from ciel.meta.core import MetaEngine
 from ciel.naming.core import NamingEngine
 from ciel.naming.agents import bootstrap_naming_engine
 from ciel.noosphere.core import NoosphereEngine
-from ciel.openclaw.core import OpenClawEngine
+from ciel.messaging.core import MessagingEngine
 from ciel.os.core import OSEngine
 from ciel.perception.core import PerceptionEngine
 from ciel.polyglot.core import PolyglotEngine
@@ -64,6 +64,16 @@ from ciel.quantum.core import QuantumEngine
 from ciel.security.core import SecurityEngine
 from ciel.skills.core import ForgeronEngine
 from ciel.swarm.core import SwarmEngine
+from ciel.toolforge.core import ToolForgeEngine
+from ciel.vision.core import VisionEngine
+from ciel.control.core import ControlEngine
+from ciel.sandbox.core import SandboxEngine
+from ciel.clones.core import ClonesEngine
+from ciel.websearch.core import WebSearchEngine
+from ciel.database.core import DatabaseEngine
+from ciel.config.core import ConfigEngine
+from ciel.cache.core import CacheEngine
+from ciel.workflow.core import WorkflowEngine
 
 
 class ProcessStatus(Enum):
@@ -90,8 +100,8 @@ class CIELBrain:
     Point d'entrée unique pour toutes les strates :
     Phase 0-2 : Core, Axiomes, Crypto, Kernel, Polyglot
     Phase 3   : Évolution (60+ algorithmes)
-    Phase 4   : Hermes (Gateway, State, Providers)
-    Phase 5   : OpenClaw (Channels, Skills, Gateway)
+    Phase 4   : LLMBridge (Providers LLM, Gateway, State)
+    Phase 5   : Messaging (Channels, Skills, Gateway)
     Phase 6   : Immunitaire + Narrateur
     Phase 7   : VSM, FEP, Gödel, Quine, Logics
     Phase 8   : CIEL-LM (CoT, ToT, GoT, NTP, ReAct, STaR, RAP)
@@ -181,7 +191,7 @@ class CIELBrain:
         self.load_module("ethics", EthicsEngine())
         self.load_module("evolution", EvolutionEngine())
         self.load_module("forge", ForgeEngine())
-        self.load_module("hermes", HermesEngine())
+        self.load_module("llmbridge", LLMBridgeEngine())
         self.load_module("interfaces", InterfacesEngine())
         self.load_module("logos", LogosEngine())
         self.load_module("math", MathEngine())
@@ -191,7 +201,7 @@ class CIELBrain:
         bootstrap_naming_engine(naming_engine)
         self.load_module("naming", naming_engine)
         self.load_module("noosphere", NoosphereEngine())
-        self.load_module("openclaw", OpenClawEngine())
+        self.load_module("messaging", MessagingEngine())
         self.load_module("os", OSEngine())
         self.load_module("perception", PerceptionEngine())
         self.load_module("polyglot", PolyglotEngine())
@@ -203,7 +213,7 @@ class CIELBrain:
         self.load_module("metamorphic_core", MetamorphicCore())
         self.load_module("emergent_language", EmergentLanguage())
         self.load_module("titan", TitanEcosystem())
-        # Phase 12 — Modules HYDRA portés
+        # Phase 12 — Modules évolutionnaires avancés
         self.load_module("aegis", Aegis())
         self.load_module("arche_de_noe", ArcheDeNoe())
         self.load_module("causal_brain", CausalBrain())
@@ -234,7 +244,21 @@ class CIELBrain:
         self.load_module("research_daemon", ResearchDaemon())
         self.load_module("torch_rl_bridge", TorchRLBridge())
         self.load_module("transmutation_budget", TransmutationBudget())
-        self.emit("brain.modules_loaded", count=57)
+        # Nouvelles capacités v∞.8
+        self.load_module("toolforge", ToolForgeEngine())
+        self.load_module("vision", VisionEngine())
+        self.load_module("control", ControlEngine())
+        self.load_module("sandbox", SandboxEngine())
+        self.load_module("clones", ClonesEngine())
+        self.load_module("websearch", WebSearchEngine())
+        # Infrastructure v∞.8
+        self.load_module("database", DatabaseEngine())
+        self.load_module("config", ConfigEngine())
+        self.load_module("cache", CacheEngine())
+        # Orchestration — Workflow Engine (charge après la config)
+        wf_engine = WorkflowEngine(brain=self)
+        self.load_module("workflow", wf_engine)
+        self.emit("brain.modules_loaded", count=67)
 
     def process(self, input_data: Any) -> Any:
         """Pipeline de traitement unifié à travers tous les modules."""

@@ -44,6 +44,11 @@ CORE_MODULES = [
     "ciel.interfaces.cli",
     "ciel.polyglot",
     "ciel.polyglot.bridge",
+    "ciel.llmbridge",
+    "ciel.llmbridge.gateway",
+    "ciel.messaging",
+    "ciel.messaging.channels",
+    "ciel.core_evolution",
 ]
 
 
@@ -56,16 +61,16 @@ def test_module_imports(module_name: str) -> None:
 def test_ciel_root_constants() -> None:
     """Le package ciel expose ses constantes."""
     import ciel
-    assert ciel.__version__ == "0.1.0"
-    assert "Singularité" in ciel.__edition__
-    assert "ÉVEIL" in ciel.__phase__
+    assert ciel.__version__ == "1.0.0"
+    assert "Cosmologique" in ciel.__edition__
+    assert "TRANSCENDANCE" in ciel.__phase__
     assert set(ciel.AXIOMS) == {"α", "β", "γ", "δ"}
     assert len(ciel.STRATA) == 12
     assert len(ciel.TRANSVERSES) == 8
 
 
-def test_strata_ordering_matches_vinfini2() -> None:
-    """L'ordre des strates respecte la v∞.2 (1=NOYAU, 12=LOGOS)."""
+def test_strata_ordering_matches_vinfini8() -> None:
+    """L'ordre des strates respecte la v∞.8 (1=NOYAU, 12=LOGOS)."""
     import ciel
     assert ciel.STRATA[0] == "noyau"
     assert ciel.STRATA[1] == "éthique"
@@ -84,5 +89,5 @@ def test_strata_ordering_matches_vinfini2() -> None:
 def test_transverses_complete() -> None:
     """Les 6 transverses sont définies."""
     import ciel
-    expected = {"brain", "swarm", "security", "economy", "quantum", "math", "hermes", "openclaw"}
+    expected = {"brain", "swarm", "security", "economy", "quantum", "math", "llmbridge", "messaging"}
     assert set(ciel.TRANSVERSES) == expected

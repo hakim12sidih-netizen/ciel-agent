@@ -1,143 +1,158 @@
 """
-Aegis - Formal Verification System
-Audits code changes for security and performance constraints.
+CIEL v1.0 — Aegis : audit statique de code pour auto-réécriture.
+
+Migré depuis Hydra, adapté pour CIEL.
+Vérifie que les modifications proposées sont sûres :
+  - Syntaxe Python valide (compile)
+  - Pas d'imports dangereux
+  - Pas de boucles infinies évidentes
+  - Pas d'accès aux secrets
+  - Respect des conventions CIEL
 """
 from __future__ import annotations
 
-import json
-import logging
-import os
+import ast
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger(__name__)
+
+DANGEROUS_IMPORTS = {
+    "os.system", "os.popen", "subprocess.call", "subprocess.Popen",
+    "subprocess.run", "shutil.rmtree", "shutil.chown",
+    "eval", "exec", "compile", "__import__",
+    "pickle.loads", "pickle.load", "shelve.open",
+    "ctypes.CDLL", "ctypes.WinDLL",
+}
+
+DANGEROUS_PATTERNS = [
+    (r"open\(.*['\"][rwab+]+['\"]\)", "File write operations"),
+    (r"\.env|API_KEY|SECRET|PASSWORD|TOKEN", "Potential secret exposure"),
+    (r"while\s+True\s*:", "Infinite loop risk"),
+    (r"os\.environ", "Environment access"),
+    (r"sys\.stdin", "Standard input"),
+    (r"ptyprocess|pexpect", "PTY operations"),
+]
 
 
 @dataclass(slots=True)
-class SafetyMetadata:
-    """Metadata for safety proof"""
-    complexity: int
-    forbidden_patterns: list[str] = field(default_factory=list)
-    potential_infinite_loops: list[str] = field(default_factory=list)
+class AuditFinding:
+    line: int
+    severity: str
+    message: str
+    category: str
+
+    def to_dict(self) -> dict:
+        return {"line": self.line, "severity": self.severity,
+                "message": self.message, "category": self.category}
 
 
 @dataclass(slots=True)
-class SafetyProof:
-    """Formal verification proof result"""
-    is_safe: bool
-    errors: list[str] = field(default_factory=list)
-    score: float = 1.0  # 0 to 1
-    metadata: SafetyMetadata = field(default_factory=lambda: SafetyMetadata(complexity=0))
+class AuditResult:
+    passed: bool
+    findings: list[AuditFinding] = field(default_factory=list)
+    score: float = 1.0
 
-
-@dataclass(slots=True)
-class Aegis:
-    """
-    AEGIS - Formal Verification Engine
-    Audits code changes to ensure security and performance constraints.
-    """
-    
-    def __post_init__(self) -> None:
-        """Initialize verification engine"""
-        logger.info("[Aegis] 🛡️ Formal Verification Engine (Audit Statique) activated.")
-
-    async def verify_code(self, file_path: str, code: str) -> SafetyProof:
-        """
-        Verify code for safety violations.
-        
-        Checks for:
-        1. Forbidden APIs (eval, exec, spawn)
-        2. Infinite loops without break
-        3. Code complexity
-        """
-        logger.info(f"[Aegis] 🛡️ Auditing code: {os.path.basename(file_path)}...")
-        
-        proof = SafetyProof(
-            is_safe=True,
-            errors=[],
-            score=1.0,
-            metadata=SafetyMetadata(complexity=0)
-        )
-
-        # 1. Forbidden API Check
-        forbidden_apis = {"eval", "exec", "spawn", "execSync", "spawnSync"}
-        for api in forbidden_apis:
-            if api in code:
-                proof.metadata.forbidden_patterns.append(api)
-                proof.is_safe = False
-                proof.errors.append(
-                    f"FORBIDDEN API: Use of {api} is restricted by AEGIS protocol."
-                )
-
-        # 2. Loop Safety Check (simple regex-based)
-        if "while True:" in code or "while 1:" in code:
-            if "break" not in code.split("while")[1].split("\n")[0]:
-                proof.metadata.potential_infinite_loops.append("while(True)")
-                proof.is_safe = False
-                proof.errors.append(
-                    "POTENTIAL INFINITE LOOP: while(True) detected without break condition."
-                )
-
-        # 3. Complexity Metric (line count as proxy)
-        lines = code.split("\n")
-        proof.metadata.complexity = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
-        
-        if proof.metadata.complexity > 100:
-            proof.score -= 0.2
-            logger.warning(f"[Aegis] High complexity detected: {proof.metadata.complexity} lines.")
-
-        # 4. Persist proof
-        proof_dir = os.path.join(os.getcwd(), "src", "evolution", "proofs")
-        os.makedirs(proof_dir, exist_ok=True)
-        
-        proof_path = os.path.join(proof_dir, f"{os.path.basename(file_path)}.proof.json")
-        with open(proof_path, "w") as f:
-            json.dump({
-                "is_safe": proof.is_safe,
-                "errors": proof.errors,
-                "score": proof.score,
-                "metadata": {
-                    "complexity": proof.metadata.complexity,
-                    "forbidden_patterns": proof.metadata.forbidden_patterns,
-                    "potential_infinite_loops": proof.metadata.potential_infinite_loops,
-                }
-            }, f, indent=2)
-
-        if proof.is_safe:
-            logger.info(f"[Aegis] ✅ CODE VERIFIED. Safety score: {proof.score}")
-        else:
-            logger.error("[Aegis] ❌ CODE REJECTED. Safety violations found.")
-
-        return proof
-
-    def process(self, input_data: Any) -> dict[str, Any]:
-        """
-        Process verification request.
-        CIEL compatibility method.
-        """
-        if isinstance(input_data, dict):
-            code = input_data.get("code", "")
-            file_path = input_data.get("file_path", "unknown.py")
-            
-            # Note: In async context, this should be awaited
-            # For sync compatibility, return basic analysis
-            proof = SafetyProof(is_safe=True)
-            
-            if "eval" in code or "exec" in code:
-                proof.is_safe = False
-                proof.errors.append("Forbidden API detected")
-                proof.score = 0.0
-            
-            return {
-                "is_safe": proof.is_safe,
-                "errors": proof.errors,
-                "score": proof.score,
-                "metadata": proof.metadata.__dict__
-            }
-        
+    def to_dict(self) -> dict:
         return {
-            "is_safe": True,
-            "errors": [],
-            "score": 1.0,
-            "metadata": SafetyMetadata(complexity=0).__dict__
+            "passed": self.passed,
+            "finding_count": len(self.findings),
+            "score": round(self.score, 2),
+            "findings": [f.to_dict() for f in self.findings],
         }
+
+
+class Aegis:
+    """Bouclier d'audit statique pour CIEL.
+
+    Vérifie que les modifications de code proposées
+    respectent les règles de sécurité et de qualité.
+    """
+
+    def audit(self, code: str, file_path: str = "unknown") -> AuditResult:
+        findings: list[AuditFinding] = []
+
+        # 1. Vérification syntaxique
+        findings.extend(self._check_syntax(code, file_path))
+
+        # 2. Analyse AST
+        try:
+            tree = ast.parse(code)
+            findings.extend(self._check_imports(tree))
+            findings.extend(self._check_ast_patterns(tree))
+        except SyntaxError:
+            pass  # déjà rapporté dans _check_syntax
+
+        # 3. Pattern matching regex
+        findings.extend(self._check_regex_patterns(code))
+
+        # 4. Score
+        score = max(0.0, 1.0 - len(findings) * 0.15)
+        passed = score >= 0.5 and not any(f.severity == "critical" for f in findings)
+
+        return AuditResult(passed=passed, findings=findings, score=score)
+
+    def _check_syntax(self, code: str, file_path: str) -> list[AuditFinding]:
+        findings = []
+        try:
+            ast.parse(code)
+        except SyntaxError as e:
+            findings.append(AuditFinding(
+                line=e.lineno or 0,
+                severity="critical",
+                message=f"SyntaxError: {e.msg}",
+                category="syntax",
+            ))
+        return findings
+
+    def _check_imports(self, tree: ast.AST) -> list[AuditFinding]:
+        findings = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name in {i.split(".")[0] for i in DANGEROUS_IMPORTS}:
+                        findings.append(AuditFinding(
+                            line=node.lineno,
+                            severity="critical",
+                            message=f"Import dangereux: {alias.name}",
+                            category="security",
+                        ))
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                for alias in node.names:
+                    full_name = f"{module}.{alias.name}"
+                    if full_name in DANGEROUS_IMPORTS or module in {i.split(".")[0] for i in DANGEROUS_IMPORTS}:
+                        findings.append(AuditFinding(
+                            line=node.lineno,
+                            severity="critical",
+                            message=f"Import dangereux: {full_name}",
+                            category="security",
+                        ))
+        return findings
+
+    def _check_ast_patterns(self, tree: ast.AST) -> list[AuditFinding]:
+        findings = []
+        for node in ast.walk(tree):
+            # Vérifie les appels à eval/exec
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Name) and node.func.id in ("eval", "exec", "compile"):
+                    findings.append(AuditFinding(
+                        line=node.lineno,
+                        severity="critical",
+                        message=f"Appel à {node.func.id}() interdit",
+                        category="security",
+                    ))
+        return findings
+
+    def _check_regex_patterns(self, code: str) -> list[AuditFinding]:
+        findings = []
+        for i, line in enumerate(code.splitlines(), 1):
+            for pattern, desc in DANGEROUS_PATTERNS:
+                if re.search(pattern, line):
+                    findings.append(AuditFinding(
+                        line=i,
+                        severity="warning",
+                        message=f"{desc} détecté",
+                        category="security",
+                    ))
+        return findings

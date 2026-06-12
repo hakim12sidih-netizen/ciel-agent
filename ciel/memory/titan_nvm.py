@@ -1,5 +1,5 @@
 """
-CIEL v∞.3 — TitanNVM : Mémoire Neural Virtual Memory (inspiré HYDRA).
+CIEL v∞.3 — TitanNVM : Mémoire Neural Virtual Memory (inspiré de CIEL).
 
 Gère la hiérarchie de mémoire du CIEL-BRAIN (L1 à L4) :
   - L1_HOT : Registres actifs (mémoire de travail)
@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 
 class MemoryLevel(str, Enum):
-    """Niveaux de mémoire CIEL (inspirés HYDRA TitanNVM)."""
+    """Niveaux de mémoire CIEL (inspirés de CIEL TitanNVM)."""
     L1_HOT = "L1_HOT"       # Mémoire de travail (registres actifs)
     L2_WARM = "L2_WARM"     # Contexte session (mémoire épisodique)
     L3_BRAIN = "L3_BRAIN"   # Savoir consolidé (mémoire sémantique)
@@ -41,7 +41,7 @@ class TitanNVM:
     """
     Neural Virtual Memory — Gestion hiérarchique de la mémoire CIEL.
     
-    Inspiré de HYDRA TitanNVM (4 niveaux L1-L4).
+    Mémoire CIEL TitanNVM (4 niveaux L1-L4).
     Implémentation Python avec persistance optionnelle.
     """
     

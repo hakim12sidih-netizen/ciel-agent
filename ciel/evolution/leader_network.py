@@ -1,137 +1,95 @@
 """
-LeaderNetwork - Inter-Agent Communication Channel
-EventEmitter for faction coordination and emergent tokens.
+CIEL v1.0 — LeaderNetwork : bus d'événements pour les agents CIEL.
+
+Migré depuis Hydra (LeaderNetwork), adapté pour CIEL.
+Permet aux agents, strates et modules de communiquer
+via un pattern publish/subscribe asynchrone.
 """
 from __future__ import annotations
 
-import logging
+import time
+import uuid
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass(slots=True)
-class EmergentToken:
-    """Self-organized semantic token"""
-    symbol: str
-    intents: list[dict[str, Any]]
-    valence: float  # -1 = threat, 0 = neutral, +1 = opportunity
-    timestamp: float
-    originator_id: str
-    id: str
+class Event:
+    type: str
+    data: dict[str, Any]
+    source: str = "unknown"
+    timestamp: float = field(default_factory=time.time)
+    event_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
 
 
-@dataclass(slots=True)
 class LeaderNetwork:
+    """Bus d'événements central de CIEL.
+
+    Pattern publish/subscribe avec :
+      - Filtrage par type d'événement
+      - Historique des événements
+      - Métriques de traffic
     """
-    Leader Network - EventBus for Inter-Agent Communication
-    Supports both vector and semantic token channels.
-    """
-    listeners: dict[str, list[Callable]] = field(default_factory=dict)
-    max_listeners: int = 100
 
-    def __post_init__(self) -> None:
-        """Initialize network"""
-        logger.info("[Leader Network] 📡 Leader Network initialized.")
+    _instance: LeaderNetwork | None = None
 
-    def broadcast_discovery(self, faction_id: str, title: str, discovery: str) -> None:
-        """Broadcast discovery to all leaders"""
-        logger.debug(
-            f"[Leader Network] 📡 {title} broadcasts: \"{discovery[:50]}...\""
-        )
-        self._emit("discovery", {
-            "faction_id": faction_id,
-            "title": title,
-            "discovery": discovery
-        })
+    def __new__(cls) -> LeaderNetwork:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._subscribers = defaultdict(list)
+            cls._instance._history: list[Event] = []
+            cls._instance._max_history = 1000
+            cls._instance._event_count = 0
+            cls._instance._id = f"NET-{uuid.uuid4().hex[:8]}"
+        return cls._instance
 
-    def send_direct_message(
-        self, from_faction_id: str, to_faction_id: str, message: str
-    ) -> None:
-        """Send direct message between factions"""
-        channel = f"dm_{to_faction_id}"
-        self._emit(channel, {
-            "from_faction_id": from_faction_id,
-            "message": message
-        })
+    def subscribe(self, event_type: str, callback: Callable[[Event], None]) -> str:
+        token = f"SUB-{uuid.uuid4().hex[:12]}"
+        self._subscribers[event_type].append((token, callback))
+        return token
 
-    def transmit_council_order(self, order: str) -> None:
-        """Transmit directive from Council/Overseer"""
-        logger.debug(
-            f"[Council Command] ⚠️ OVERSEER TRANSMITS DIRECTIVE: {order}"
-        )
-        self._emit("council_order", order)
-
-    def broadcast_vector(
-        self, from_id: str, to_id: str, vector: list[float]
-    ) -> None:
-        """Broadcast raw vector (ultra-efficient coordination)"""
-        self._emit("vector_exchange", {
-            "from_id": from_id,
-            "to_id": to_id,
-            "vector": vector
-        })
-        logger.debug(
-            f"[Emergent Comm] Vector Exchange: {from_id} ➔ {to_id} (len: {len(vector)})"
-        )
-
-    def broadcast_token(self, token: EmergentToken) -> None:
-        """Broadcast emergent semantic token"""
-        logger.debug(
-            f"[Leader Network] 🗣️ Token: {token.symbol} from {token.originator_id} "
-            f"(valence: {token.valence:.2f})"
-        )
-        self._emit("token", token)
-
-    def send_token_to(self, to_id: str, token: EmergentToken) -> None:
-        """Send token to specific agent"""
-        logger.debug(
-            f"[Leader Network] 📨 Token to {to_id}: {token.symbol}"
-        )
-        self._emit(f"token_{to_id}", token)
-
-    def on(self, event: str, callback: Callable) -> None:
-        """Register listener for event"""
-        if event not in self.listeners:
-            self.listeners[event] = []
-        if len(self.listeners[event]) < self.max_listeners:
-            self.listeners[event].append(callback)
-
-    def off(self, event: str, callback: Callable) -> None:
-        """Unregister listener"""
-        if event in self.listeners:
-            self.listeners[event] = [
-                c for c in self.listeners[event] if c != callback
+    def unsubscribe(self, token: str) -> bool:
+        for event_type in list(self._subscribers.keys()):
+            self._subscribers[event_type] = [
+                (t, cb) for t, cb in self._subscribers[event_type] if t != token
             ]
+            if not self._subscribers[event_type]:
+                del self._subscribers[event_type]
+        return True
 
-    def _emit(self, event: str, data: Any) -> None:
-        """Emit event to all listeners"""
-        if event in self.listeners:
-            for callback in self.listeners[event]:
-                try:
-                    callback(data)
-                except Exception as e:
-                    logger.error(f"[Leader Network] Error in callback: {e}")
+    def emit(self, event_type: str, data: dict[str, Any], source: str = "leader_network") -> Event:
+        event = Event(type=event_type, data=data, source=source)
+        self._event_count += 1
+        self._history.append(event)
+        if len(self._history) > self._max_history:
+            self._history.pop(0)
+        for token, callback in self._subscribers.get(event_type, []):
+            try:
+                callback(event)
+            except Exception as e:
+                print(f"[LeaderNetwork] Error in subscriber {token}: {e}")
+        return event
 
-    def process(self, input_data: Any) -> dict[str, Any]:
-        """
-        Process network request.
-        CIEL compatibility method.
-        """
+    def get_history(self, event_type: str | None = None, limit: int = 50) -> list[Event]:
+        if event_type:
+            return [e for e in self._history if e.type == event_type][-limit:]
+        return self._history[-limit:]
+
+    def stats(self) -> dict:
+        type_counts: dict[str, int] = defaultdict(int)
+        for e in self._history:
+            type_counts[e.type] += 1
         return {
-            "channels": len(self.listeners),
-            "status": "active"
+            "total_events": self._event_count,
+            "history_size": len(self._history),
+            "subscriber_count": sum(len(subs) for subs in self._subscribers.values()),
+            "event_types": dict(type_counts),
         }
 
+    def clear_history(self) -> None:
+        self._history.clear()
 
-# Global singleton instance
-_leader_network: LeaderNetwork | None = None
-
-
-def get_leader_network() -> LeaderNetwork:
-    """Get or create global leader network"""
-    global _leader_network
-    if _leader_network is None:
-        _leader_network = LeaderNetwork()
-    return _leader_network
+    @classmethod
+    def reset_instance(cls) -> None:
+        cls._instance = None

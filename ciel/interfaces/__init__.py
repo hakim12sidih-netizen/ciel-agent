@@ -4,7 +4,11 @@ Transverse — INTERFACES : 6 modes d'interaction avec l'extérieur.
 """
 from __future__ import annotations
 
-from ciel.interfaces.cli import cli
 from ciel.interfaces.core import InterfacesEngine
 
-__all__ = ["cli", "InterfacesEngine"]
+__all__ = ["InterfacesEngine", "cli"]
+
+
+def cli() -> None:
+    from ciel.interfaces.cli import cli as _cli
+    _cli()
