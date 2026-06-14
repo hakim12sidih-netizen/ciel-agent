@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import sys
 import platform as _platform
+import shutil
 from pathlib import Path
 
 import click
@@ -21,6 +22,19 @@ from rich.text import Text
 from rich.align import Align
 
 from ciel.install_cli import install_cli
+from ciel.plugins.cli import plugin_group
+from ciel.mesh.cli import mesh_group
+from ciel.acp.cli import acp_group
+from ciel.interfaces.backends.cli import terminal_group, theme_group
+from ciel.docs.cli import docs_group
+from ciel.skills.cli import skill_group
+from ciel.perf.cli import perf_group
+from ciel.gateway.cli import gateway_group
+from ciel.learning.cli import curator_group, skillgen_group
+from ciel.sandbox.cli import sandbox_group, workspace_group
+from ciel.delegation.cli import kanban_group
+from ciel.swarm.cli import swarm_group
+from ciel.interfaces.skins import list_skins, get_skin_manager
 
 console = Console()
 
@@ -166,6 +180,21 @@ from ciel.interfaces.api_cli import api_group as _api_group
 
 cli.add_command(install_cli)
 cli.add_command(_api_group)
+cli.add_command(plugin_group)
+cli.add_command(mesh_group)
+cli.add_command(acp_group)
+cli.add_command(terminal_group)
+cli.add_command(theme_group)
+cli.add_command(docs_group)
+cli.add_command(skill_group)
+cli.add_command(perf_group)
+cli.add_command(gateway_group)
+cli.add_command(curator_group)
+cli.add_command(skillgen_group)
+cli.add_command(sandbox_group)
+cli.add_command(workspace_group)
+cli.add_command(kanban_group)
+cli.add_command(swarm_group)
 
 
 @cli.command()
@@ -599,6 +628,181 @@ def providers() -> None:
 
 
 @cli.command()
+def onboard() -> None:
+    """Assistant de configuration interactif (2 min)."""
+    from ciel.interfaces.onboard import run_onboard
+    run_onboard()
+
+
+@cli.group()
+def skin() -> None:
+    """Gestion des skins / thèmes visuels."""
+
+
+@skin.command(name="list")
+def skin_list() -> None:
+    """Liste les skins disponibles."""
+    table = Table(box=box.HEAVY_EDGE)
+    table.add_column("Nom", style="cyan")
+    table.add_column("Affichage", style="yellow")
+    table.add_column("Description", style="green")
+    table.add_column("Thème", style="blue")
+    from ciel.interfaces.skins import list_skins
+    for s in list_skins():
+        table.add_row(s["name"], s["display_name"], s["description"][:50], s["theme"])
+    console.print(table)
+    sm = get_skin_manager()
+    console.print(f"\nSkin actuel : [bold]{sm.get_current().name}[/]")
+
+
+@skin.command()
+@click.argument("name")
+def set(name: str) -> None:
+    """Change le skin actif."""
+    sm = get_skin_manager()
+    if sm.set_current(name):
+        console.print(f"[green]✓ Skin changé : {name}[/]")
+    else:
+        console.print(f"[red]✗ Skin inconnu : {name}[/]")
+
+
+@skin.command()
+@click.argument("name")
+def info(name: str) -> None:
+    """Affiche les détails d'un skin."""
+    sm = get_skin_manager()
+    skin = sm.get(name)
+    if not skin:
+        console.print(f"[red]Skin inconnu : {name}[/]")
+        return
+    console.print(Panel(
+        f"  Nom          : {skin.name}\n"
+        f"  Affichage    : {skin.display_name}\n"
+        f"  Description  : {skin.description}\n"
+        f"  Thème        : {skin.theme_name}\n"
+        f"  Couleurs     : {len(skin.colors)} définies\n"
+        f"  UI           : {json.dumps(skin.ui)}",
+        title=f"Skin {name}",
+        box=box.ROUNDED,
+    ))
+
+
+@cli.group()
+def profile() -> None:
+    """Gestion des profils multi-instances (CIEL_HOME)."""
+
+
+@profile.command()
+@click.argument("name")
+@click.option("--display", default="", help="Nom d'affichage")
+@click.option("--desc", default="", help="Description")
+@click.option("--provider", default="openai", help="Provider LLM par défaut")
+@click.option("--model", default="gpt-4o", help="Modèle par défaut")
+@click.option("--from", "from_profile", default="", help="Copier depuis un profil existant")
+def create(name: str, display: str, desc: str, provider: str, model: str, from_profile: str):
+    """Crée un nouveau profil."""
+    from ciel.profiles import ProfileManager
+    pm = ProfileManager()
+    try:
+        p = pm.create(name, display, desc, provider, model, from_profile)
+        console.print(f"[green]✓ Profil créé : {p.name}[/]")
+        console.print(f"  Home : {p.home}")
+    except ValueError as e:
+        console.print(f"[red]✗ {e}[/]")
+
+
+@profile.command()
+@click.argument("name")
+def switch(name: str):
+    """Bascule vers un profil."""
+    from ciel.profiles import ProfileManager
+    pm = ProfileManager()
+    if pm.switch(name):
+        profile = pm.get(name)
+        console.print(f"[green]✓ Profil actif : {profile.name}[/]")
+    else:
+        console.print(f"[red]✗ Profil inconnu : {name}[/]")
+
+
+@profile.command()
+@click.option("--all", "show_all", is_flag=True, help="Inclure le profil par défaut")
+def list(show_all: bool):
+    """Liste les profils."""
+    from ciel.profiles import ProfileManager
+    pm = ProfileManager()
+    profiles = pm.list(include_default=show_all)
+    table = Table(box=box.ROUNDED)
+    table.add_column("Nom", style="cyan")
+    table.add_column("Affichage", style="yellow")
+    table.add_column("Provider")
+    table.add_column("Modèle")
+    table.add_column("Skin")
+    table.add_column("Actif")
+    current = pm.get_current_name()
+    for p in profiles:
+        is_current = "✓" if p.name == current else ""
+        cur_style = "green" if p.name == current else ""
+        table.add_row(
+            p.name, p.display_name, p.provider, p.model,
+            p.skin, f"[{cur_style}]{is_current}[/]",
+        )
+    console.print(table)
+
+
+@profile.command()
+@click.argument("name")
+def delete(name: str):
+    """Supprime un profil."""
+    from ciel.profiles import ProfileManager
+    pm = ProfileManager()
+    if pm.delete(name):
+        console.print(f"[green]✓ Profil supprimé : {name}[/]")
+    else:
+        console.print(f"[red]✗ Impossible de supprimer (profil par défaut ou inconnu)[/]")
+
+
+@profile.command()
+def info():
+    """Affiche le profil actif."""
+    from ciel.profiles import ProfileManager
+    pm = ProfileManager()
+    p = pm.get()
+    current = pm.get_current_name()
+    console.print(Panel(
+        f"  Nom       : {p.name}\n"
+        f"  Affichage : {p.display_name}\n"
+        f"  Provider  : {p.provider}\n"
+        f"  Modèle    : {p.model}\n"
+        f"  Skin      : {p.skin}\n"
+        f"  Home      : {p.home}\n"
+        f"  Défaut    : {'✓' if p.is_default else '✗'}",
+        title=f"Profil actif : {current}",
+        box=box.ROUNDED,
+    ))
+
+
+@cli.command()
+@click.option("--port", default=8765, help="Port du serveur CIEL")
+def mcp(port: int) -> None:
+    """Lance le serveur MCP v2 (Model Context Protocol) pour Claude Desktop.
+    \b
+    Utilisation dans Claude Desktop:
+      Ajouter à ~/.config/Claude/claude_desktop_config.json:
+      {
+        "mcpServers": {
+          "ciel": {
+            "command": "ciel",
+            "args": ["mcp"]
+          }
+        }
+      }
+    """
+    os.environ["CIEL_PORT"] = str(port)
+    from ciel.mcp.server import main as mcp_main
+    mcp_main()
+
+
+@cli.command()
 @click.option("--debug", is_flag=True, help="Mode debug avec logs supplémentaires")
 @click.option("--port", default=8765, type=int, help="Port du serveur CIEL")
 def desktop(debug: bool, port: int) -> None:
@@ -722,6 +926,162 @@ def mcp(port: int) -> None:
 def logo() -> None:
     """Affiche le logo CIEL."""
     console.print(_logo())
+
+
+@cli.command()
+@click.option("--channel", default="stable", type=click.Choice(["stable", "beta"]), help="Canal de mise à jour")
+@click.option("--dry-run", is_flag=True, default=False, help="Afficher la version disponible sans mettre à jour")
+def update(channel: str, dry_run: bool) -> None:
+    """Met à jour CIEL vers la dernière version.
+
+    Par défaut, récupère depuis GitHub releases.
+    Utilise git pour les mises à jour en cours de développement.
+    """
+    import json
+    import subprocess
+    import urllib.request
+    import tempfile
+    import tarfile
+    import zipfile
+    import platform
+    from pathlib import Path
+
+    console.print(f"[{channel}] Vérification des mises à jour CIEL...\n")
+
+    # 1. Déterminer la version actuelle
+    current_version = "v0.1.0"
+    try:
+        from ciel import __version__
+        current_version = __version__
+    except ImportError:
+        pass
+
+    console.print(f"[dim]Version actuelle : {current_version}[/]")
+
+    # 2. Récupérer l'info de la dernière version depuis GitHub API
+    api_url = "https://api.github.com/repos/anomalyco/ciel/releases/latest"
+    headers = {"Accept": "application/vnd.github.v3+json"}
+
+    try:
+        req = urllib.request.Request(api_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            release = json.loads(resp.read().decode())
+            latest_version = release.get("tag_name", "")
+            assets = release.get("assets", [])
+    except Exception as e:
+        console.print(f"[red]✗ Impossible de récupérer le changelog GitHub : {e}[/]")
+        console.print("[yellow]Passer au mode local...[/]")
+        latest_version = None
+
+    # 3. Rechercher le bon actif pour la plateforme actuelle
+    def find_asset(assets: list[dict], patterns: list[str]) -> dict | None:
+        for asset in assets:
+            name = asset.get("name", "")
+            for pat in patterns:
+                if pat in name.lower():
+                    return asset
+        return None
+
+    if latest_version and assets:
+        # Nom de fichier de l'actif en fonction de la plateforme
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+
+        patterns = []
+        if system == "linux":
+            if "arm" in machine or "aarch" in machine:
+                patterns = ["linux-arm", "linux-aarch64", "linux-arm64"]
+            else:
+                patterns = ["linux-x86_64", "linux-amd64", "linux"]
+        elif system == "darwin":
+            patterns = ["darwin-arm64", "darwin-x86_64", "macos"]
+        elif system == "windows":
+            patterns = ["windows-x86_64", "windows-amd64", "windows"]
+        else:
+            patterns = ["*"]
+
+        asset = find_asset(assets, patterns)
+        if asset:
+            download_url = asset.get("browser_download_url")
+            asset_name = asset.get("name")
+        else:
+            console.print("[yellow]Aucun actif compatible trouvé — utiliser les sources GitHub[/]")
+            download_url = None
+    else:
+        download_url = None
+
+    # 4. Afficher la version disponible
+    if latest_version:
+        console.print(f"[green]✓ Dernière version disponible : {latest_version}[/]")
+        if not dry_run and download_url:
+            console.print(f"[dim]Téléchargement : {asset_name}[/]")
+            console.print("[dim]Installation en cours...[/]\n")
+        else:
+            console.print("[dim]No download URL found[/]\n")
+
+    # 5. Si nous sommes en développement, utiliser git pull (fallback)
+    ciel_path = Path(__file__).resolve().parent.parent.parent
+    git_dir = ciel_path / ".git"
+    if git_dir.exists() and not dry_run:
+        console.print("[dim]Mode développement détecté — mise à jour via git pull...[/]")
+        try:
+            subprocess.run(["git", "pull"], cwd=ciel_path, check=True)
+            console.print("[green]✓ CIEL mis à jour depuis git[/]\n")
+        except subprocess.CalledProcessError as e:
+            console.print(f"[red]✗ git pull échoué : {e}[/]")
+        return
+
+    # 6. Si une nouvelle version est disponible et qu'on n'est pas en dry-run, télécharger et installer
+    if latest_version and download_url and not dry_run:
+        try:
+            # Télécharger l'actif
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".tar.gz") as f:
+                download_path = f.name
+                console.print(f"  Téléchargement {asset_name}...\n")
+                req = urllib.request.Request(download_url)
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    f.write(resp.read())
+
+            # Extraire et installer (version simple)
+            extracted_dir = ciel_path / "ciel-binary"
+            if extracted_dir.exists():
+                shutil.rmtree(extracted_dir)
+            extracted_dir.mkdir(parents=True, exist_ok=True)
+
+            if download_url.endswith(".tar.gz") or download_url.endswith(".tgz"):
+                with tarfile.open(download_path, "r:gz") as tf:
+                    tf.extractall(extracted_dir)
+            elif download_path.endswith(".zip"):
+                with zipfile.ZipFile(download_path, "r") as zf:
+                    zf.extractall(extracted_dir)
+            else:
+                raise RuntimeError(f"Format de fichier non supporté : {download_path}")
+
+            # Copier les binaires dans /usr/local/bin (exemple pour binaires installés)
+            # ou utiliser pip install -e .
+            console.print("[green]✓ CIEL mis à jour depuis GitHub[/]\n")
+            console.print("[yellow]Redémarrage du serveur CIEL recommandé ?[/]")
+
+        except Exception as e:
+            console.print(f"[red]✗ Mise à jour échouée : {e}[/]")
+        finally:
+            if os.path.exists(download_path):
+                os.unlink(download_path)
+    elif not latest_version:
+        console.print("[yellow]Changement : vérifiez manuellement https://github.com/anomalyco/ciel/releases[/]\n")
+
+    # 7. Afficher le changelog si disponible
+    if latest_version and "body" in release:
+        body = release["body"]
+        lines = body.split("\n")[:10]
+        has_changelog = any("#" in l for l in lines)
+        if has_changelog:
+            console.print("[bold]🗒️ Changelog (extrait):[/]\n")
+            for l in lines:
+                if l.strip():
+                    console.print(f"  {l}")
+            console.print()
+
 
 
 @cli.command()

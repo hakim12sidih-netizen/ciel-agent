@@ -228,9 +228,16 @@ class EthicsFilter:
         """Garbage collection de l'historique (FIFO si > max_history)."""
         if len(self._records) <= self._max_history:
             return
-        sorted_recs = sorted(self._records.items(), key=lambda kv: kv[1].executed_at)
-        to_remove = len(self._records) - self._max_history
-        for k, _ in sorted_recs[:to_remove]:
+        # Utilisation d'une approche plus efficace pour supprimer les plus anciens
+        # Si l'ordre d'insertion suit l'ordre chronologique, on peut juste itérer
+        num_to_delete = len(self._records) - self._max_history
+        keys_to_remove = []
+        for i, key in enumerate(self._records.keys()):
+            if i >= num_to_delete:
+                break
+            keys_to_remove.append(key)
+        
+        for k in keys_to_remove:
             del self._records[k]
 
 

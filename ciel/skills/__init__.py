@@ -11,5 +11,10 @@ from __future__ import annotations
 
 from ciel.skills.models import Skill, SkillManager
 from ciel.skills.curator import SkillCurator, CuratorState, ConsolidationPlan
+from ciel.skills.marketplace import SkillMarketplace, CatalogueEntry
 
-__all__ = ["Skill", "SkillManager", "SkillCurator", "CuratorState", "ConsolidationPlan"]
+__all__ = [
+    "Skill", "SkillManager",
+    "SkillCurator", "CuratorState", "ConsolidationPlan",
+    "SkillMarketplace", "CatalogueEntry",
+]

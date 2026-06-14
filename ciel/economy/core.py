@@ -146,6 +146,60 @@ class EconomyEngine:
             "gdp": round(self.gdp, 2),
         }
 
+    def token_balance(self, agent_id: str) -> float:
+        """Retourne le solde Cognitas d'un agent."""
+        acct = self.accounts.get(agent_id)
+        return acct.balance if acct else 0.0
+
+    def token_transfer(self, sender_id: str, receiver_id: str, amount: float) -> dict:
+        """Transfère des Cognitas entre agents."""
+        sender = self.accounts.get(sender_id)
+        receiver = self.accounts.get(receiver_id)
+        if not sender or not receiver:
+            return {"status": "error", "reason": "Agent not found"}
+        if sender.balance < amount:
+            return {"status": "error", "reason": "Insufficient balance"}
+        sender.balance -= amount
+        receiver.balance += amount
+        sender.transactions.append({"type": "transfer_out", "amount": amount, "to": receiver_id})
+        receiver.transactions.append({"type": "transfer_in", "amount": amount, "from": sender_id})
+        return {"status": "ok", "from": sender_id, "to": receiver_id, "amount": amount}
+
+    def marketplace(self, action: str = "list", **kwargs) -> dict:
+        """Interface du marketplace. Actions : list, buy, sell, prices."""
+        if action == "list":
+            return {
+                "markets": list(MARKET_TYPES),
+                "orders": len(self.orders),
+                "recent": [o.to_dict() for o in self.orders[-10:]],
+            }
+        elif action == "prices":
+            return {"prices": self.market_prices()}
+        elif action == "buy":
+            o = self.trade(
+                kwargs.get("seller", ""),
+                kwargs.get("buyer", ""),
+                kwargs.get("market", "skills"),
+                kwargs.get("item", ""),
+                kwargs.get("price", 10.0),
+            )
+            return {"status": "ok" if o else "error", "order": o.to_dict() if o else None}
+        elif action == "sell":
+            return {"status": "ok", "action": "sell", "item": kwargs.get("item", "")}
+        return {"status": "ok", "action": action}
+
+    def stake(self, agent_id: str, amount: float) -> dict:
+        """Stake des Cognitas (mise en garantie)."""
+        acct = self.accounts.get(agent_id)
+        if not acct:
+            return {"status": "error", "reason": "Agent not found"}
+        if acct.balance < amount:
+            return {"status": "error", "reason": "Insufficient balance"}
+        acct.balance -= amount
+        # Dans une vraie implémentation, le staking rapporterait des intérêts
+        acct.transactions.append({"type": "stake", "amount": amount})
+        return {"status": "ok", "agent": agent_id, "staked": amount, "reward_rate": 0.05}
+
     def get_stats(self) -> dict:
         return {
             "agents": len(self.accounts),

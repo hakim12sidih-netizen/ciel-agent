@@ -50,10 +50,13 @@ class SkillManager:
         self._skills_dir.mkdir(parents=True, exist_ok=True)
         self._skills: dict[str, Skill] = {}
         self._usage_file = self._skills_dir / ".usage.json"
+        self._discovered = False
         self.network = LeaderNetwork()
         self._load_usage()
 
     def discover(self) -> list[Skill]:
+        if self._discovered:
+            return list(self._skills.values())
         found = []
         for skill_file in self._skills_dir.rglob("SKILL.md"):
             try:
@@ -62,6 +65,7 @@ class SkillManager:
                 found.append(skill)
             except Exception as e:
                 print(f"[CIEL Skills] Error loading {skill_file}: {e}")
+        self._discovered = True
         self.network.emit("skills.discovered", {"count": len(found)})
         return found
 

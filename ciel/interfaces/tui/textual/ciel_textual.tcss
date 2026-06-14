@@ -1,0 +1,261 @@
+/* CIEL Textual TUI — Theme */
+
+Screen {
+    background: $background;
+}
+
+/* ── Chat Screen ─────────────────── */
+
+#chat-layout {
+    layout: grid;
+    grid-size: 1 2;
+    grid-rows: 1fr auto;
+}
+
+#message-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1;
+}
+
+#message-list {
+    height: 100%;
+}
+
+.message-row {
+    margin-bottom: 1;
+    padding: 0 1;
+}
+
+.message-user {
+    color: $accent;
+}
+
+.message-assistant {
+    color: $text;
+}
+
+.message-tool {
+    color: $tool-output;
+    text-style: dim;
+}
+
+.message-system {
+    color: $dim;
+    text-style: italic;
+}
+
+.message-label {
+    text-style: bold;
+    margin-right: 1;
+}
+
+.message-content {
+    margin-left: 2;
+}
+
+.reasoning-block {
+    color: $dim;
+    text-style: italic;
+    margin-left: 2;
+    padding: 0 1;
+}
+
+.streaming-indicator {
+    color: $secondary;
+    text-style: bold;
+}
+
+/* ── Composer / Input ───────────── */
+
+#composer-box {
+    dock: bottom;
+    border: tall $primary;
+    padding: 0 1;
+    background: $surface;
+}
+
+#composer-input {
+    background: $surface;
+    color: $text;
+    border: none;
+}
+
+#composer-status {
+    color: $dim;
+    text-style: dim;
+    padding: 0 1;
+    height: 1;
+}
+
+/* ── Status Bar ─────────────────── */
+
+#status-bar {
+    dock: bottom;
+    height: 1;
+    background: $primary;
+    color: $text;
+    padding: 0 1;
+}
+
+.status-item {
+    margin-right: 2;
+}
+
+.status-key {
+    text-style: dim;
+    color: $text;
+}
+
+/* ── Session Sidebar ────────────── */
+
+#session-sidebar {
+    width: 30;
+    background: $surface;
+    border-right: solid $primary;
+}
+
+#session-sidebar Header {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+    padding: 0 1;
+}
+
+.session-item {
+    padding: 0 1;
+    height: 3;
+}
+
+.session-item:hover {
+    background: $primary 30%;
+}
+
+.session-item.active {
+    background: $primary 50%;
+}
+
+.session-id {
+    color: $secondary;
+    text-style: bold;
+}
+
+.session-title {
+    color: $text;
+}
+
+.session-meta {
+    color: $dim;
+    text-style: dim;
+}
+
+/* ── Command Palette ────────────── */
+
+#command-palette {
+    width: 60;
+    height: 50%;
+    border: tall $primary;
+    background: $surface;
+}
+
+#command-palette Input {
+    border: none;
+    background: $surface;
+    color: $text;
+}
+
+.command-item {
+    padding: 0 1;
+    height: 1;
+}
+
+.command-item:hover {
+    background: $primary 30%;
+}
+
+.command-name {
+    color: $accent;
+    text-style: bold;
+}
+
+.command-desc {
+    color: $dim;
+}
+
+/* ── Dashboard ──────────────────── */
+
+#dashboard-container {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 1;
+    padding: 1;
+}
+
+.dashboard-card {
+    border: solid $primary;
+    padding: 1;
+    height: auto;
+}
+
+.dashboard-card Header {
+    color: $secondary;
+    text-style: bold;
+}
+
+.dashboard-value {
+    color: $accent;
+    text-style: bold;
+}
+
+.dashboard-label {
+    color: $dim;
+    text-style: dim;
+}
+
+/* ── Approvals ──────────────────── */
+
+#approval-box {
+    border: tall $warning;
+    padding: 1;
+    background: $surface;
+    dock: bottom;
+}
+
+.approval-message {
+    color: $warning;
+    text-style: bold;
+}
+
+.approval-option {
+    margin-right: 2;
+}
+
+.approval-option.selected {
+    color: $secondary;
+}
+
+.approval-option.unselected {
+    color: $dim;
+}
+
+/* ── Welcome Screen ─────────────── */
+
+#welcome-container {
+    align: center middle;
+}
+
+#welcome-title {
+    color: $secondary;
+    text-style: bold;
+}
+
+#welcome-hints {
+    color: $dim;
+    text-style: dim;
+}
+
+/* ── Scrollbar ──────────────────── */
+
+Scrollbar {
+    color: $primary;
+}

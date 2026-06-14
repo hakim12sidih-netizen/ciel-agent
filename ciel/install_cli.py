@@ -193,3 +193,12 @@ async def _do_suggest():
             current = "[green]••••[/]"
         t.add_row(s.key, s.description, s.default, current)
     console.print(t)
+
+
+@install_cli.command()
+@click.option("--mode", type=click.Choice(["standard", "dev", "all"]), default="standard",
+              help="Mode d'installation (standard, dev, all)")
+def portable(mode: str) -> None:
+    """Installation portable dans ~/.ciel/ (sans pip ni venv préalable)."""
+    from ciel.install.portable.installer import install
+    sys.exit(install(mode=mode))

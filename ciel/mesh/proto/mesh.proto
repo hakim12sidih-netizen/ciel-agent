@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package ciel.mesh;
+
+service MeshService {
+    // Discovery & Heartbeat
+    rpc Ping(PingRequest) returns (PongResponse);
+    rpc Announce(AnnounceRequest) returns (AnnounceResponse);
+    rpc FindPeer(FindPeerRequest) returns (FindPeerResponse);
+
+    // Gossip
+    rpc Gossip(GossipMessage) returns (GossipAck);
+
+    // Raft Consensus
+    rpc RequestVote(RequestVoteRequest) returns (RequestVoteResponse);
+    rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+
+    // PBFT Consensus
+    rpc PBFTPrePrepare(PBFTMessage) returns (PBFTResponse);
+    rpc PBFTPrepare(PBFTMessage) returns (PBFTResponse);
+    rpc PBFTCommit(PBFTMessage) returns (PBFTResponse);
+
+    // Data Sync
+    rpc SyncState(SyncRequest) returns (SyncResponse);
+    rpc StreamMessages(stream MeshEnvelope) returns (stream MeshEnvelope);
+}
+
+message Peer {
+    string peer_id = 1;
+    string address = 2;
+    int32 port = 3;
+    string role = 4;
+    string public_key = 5;
+    double last_seen = 6;
+    double latency = 7;
+    double trust_score = 8;
+    int32 state = 9;
+    int32 protocol_version = 10;
+    repeated string capabilities = 11;
+}
+
+message PingRequest {
+    string peer_id = 1;
+    int64 timestamp = 2;
+    string nonce = 3;
+    bytes signature = 4;
+}
+
+message PongResponse {
+    string peer_id = 1;
+    int64 timestamp = 2;
+    string nonce = 3;
+    bytes signature = 4;
+    repeated Peer known_peers = 5;
+}
+
+message AnnounceRequest {
+    Peer peer = 1;
+    int64 ttl = 2;
+}
+
+message AnnounceResponse {
+    bool accepted = 1;
+    string error = 2;
+    int32 peer_count = 3;
+}
+
+message FindPeerRequest {
+    string target_id = 1;
+    string requester_id = 2;
+    int32 max_hops = 3;
+}
+
+message FindPeerResponse {
+    Peer peer = 1;
+    repeated Peer route = 2;
+    bool found = 3;
+}
+
+message GossipMessage {
+    string sender_id = 1;
+    string topic = 2;
+    bytes payload = 3;
+    int64 timestamp = 4;
+    int32 ttl = 5;
+    string msg_id = 6;
+    bytes signature = 7;
+    map<string, string> metadata = 8;
+}
+
+message GossipAck {
+    bool accepted = 1;
+    string error = 2;
+}
+
+message RequestVoteRequest {
+    string candidate_id = 1;
+    int32 term = 2;
+    int32 last_log_index = 3;
+    int32 last_log_term = 4;
+    bytes signature = 5;
+}
+
+message RequestVoteResponse {
+    string voter_id = 1;
+    int32 term = 2;
+    bool vote_granted = 3;
+    bytes signature = 4;
+}
+
+message AppendEntriesRequest {
+    string leader_id = 1;
+    int32 term = 2;
+    int32 prev_log_index = 3;
+    int32 prev_log_term = 4;
+    repeated LogEntry entries = 5;
+    int32 leader_commit = 6;
+    bytes signature = 7;
+}
+
+message AppendEntriesResponse {
+    string follower_id = 1;
+    int32 term = 2;
+    bool success = 3;
+    int32 last_log_index = 4;
+    bytes signature = 5;
+}
+
+message LogEntry {
+    int32 term = 1;
+    int32 index = 2;
+    string command = 3;
+    bytes data = 4;
+}
+
+message PBFTMessage {
+    string sender_id = 1;
+    int32 view = 2;
+    int32 sequence = 3;
+    string operation = 4;
+    bytes request = 5;
+    bytes signature = 6;
+    map<string, bytes> preprepare_proof = 7;
+}
+
+message PBFTResponse {
+    string responder_id = 1;
+    int32 view = 2;
+    int32 sequence = 3;
+    bool accepted = 4;
+    bytes signature = 5;
+}
+
+message SyncRequest {
+    string requester_id = 1;
+    int64 last_sync_timestamp = 2;
+    repeated string interest_topics = 3;
+    int32 max_entries = 4;
+}
+
+message SyncResponse {
+    string responder_id = 1;
+    repeated MeshEnvelope entries = 2;
+    int64 sync_timestamp = 3;
+    bool has_more = 4;
+}
+
+message MeshEnvelope {
+    string msg_id = 1;
+    string sender_id = 2;
+    string target_id = 3;
+    string msg_type = 4;
+    bytes payload = 5;
+    int64 timestamp = 6;
+    int32 ttl = 7;
+    bytes signature = 8;
+    map<string, string> headers = 9;
+}

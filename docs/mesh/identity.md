@@ -1,0 +1,210 @@
+# `ciel.mesh.identity` — Identity (Ed25519)
+
+## Classes
+
+### `Any`
+
+Special type indicating an unconstrained type.
+
+- Any is compatible with every type.
+- Any assumed to have all methods.
+- All values assumed to be instances of Any.
+
+Note that all the above statements are true from the point of view of
+static type checkers. At runtime, Any should not be used with instance
+checks.
+
+### `Ed25519PrivateKey`
+
+**Méthodes :**
+
+- **`private_bytes(encoding: _serialization.Encoding, format: _serialization.PrivateFormat, encryption_algorithm: _serialization.KeySerializationEncryption)`** *(abstract)*
+  - The serialized bytes of the private key.
+- **`private_bytes_raw()`** *(abstract)*
+  - The raw bytes of the private key.
+- **`public_key()`** *(abstract)*
+  - The Ed25519PublicKey derived from the private key.
+- **`sign(data: Buffer)`** *(abstract)*
+  - Signs the data.
+
+### `Ed25519PublicKey`
+
+**Méthodes :**
+
+- **`public_bytes(encoding: _serialization.Encoding, format: _serialization.PublicFormat)`** *(abstract)*
+  - The serialized bytes of the public key.
+- **`public_bytes_raw()`** *(abstract)*
+  - The raw bytes of the public key.
+- **`verify(signature: Buffer, data: Buffer)`** *(abstract)*
+  - Verify the signature.
+
+### `NodeIdentity`
+
+NodeIdentity(peer_id: 'str', private_key: 'Ed25519PrivateKey', public_key: 'Ed25519PublicKey', address: 'str' = '', port: 'int' = 0, protocol_version: 'int' = 1, capabilities: 'list[str]' = <factory>, created_at: 'float' = <factory>)
+
+**Méthodes :**
+
+- **`__init__(peer_id: str, private_key: Ed25519PrivateKey, public_key: Ed25519PublicKey, address: str = '', port: int = 0, protocol_version: int = 1, capabilities: list[str] = <factory>, created_at: float = <factory>)`**
+- **`save(path: str | Path)`**
+- **`sign(data: bytes)`**
+- **`to_dict()`**
+- **`to_peer_proto()`**
+- **`verify(data: bytes, signature: bytes, peer_key: bytes)`**
+
+### `Path`
+
+PurePath subclass that can make system calls.
+
+Path represents a filesystem path but unlike PurePath, also offers
+methods to do system calls on path objects. Depending on your system,
+instantiating a Path will return either a PosixPath or a WindowsPath
+object. You can also instantiate a PosixPath or WindowsPath directly,
+but cannot instantiate a WindowsPath on a POSIX system or vice versa.
+
+**Méthodes :**
+
+- **`__init__(args)`**
+- **`absolute()`**
+  - Return an absolute version of this path
+- **`as_posix()`**
+  - Return the string representation of the path with forward (/)
+- **`as_uri()`**
+  - Return the path as a URI.
+- **`chmod(mode, follow_symlinks = True)`**
+  - Change the permissions of the path, like os.chmod().
+- **`copy(target, kwargs)`**
+  - Recursively copy this file or directory tree to the given destination.
+- **`copy_into(target_dir, kwargs)`**
+  - Copy this file or directory tree into the given existing directory.
+- **`exists(follow_symlinks = True)`**
+  - Whether this path exists.
+- **`expanduser()`**
+  - Return a new path with expanded ~ and ~user constructs
+- **`full_match(pattern, case_sensitive = None)`**
+  - Return True if this path matches the given glob-style pattern. The
+- **`glob(pattern, case_sensitive = None, recurse_symlinks = False)`**
+  - Iterate over this subtree and yield all existing files (of any
+- **`group(follow_symlinks = True)`**
+  - Return the group name of the file gid.
+- **`hardlink_to(target)`**
+  - Make this path a hard link pointing to the same file as *target*.
+- **`is_absolute()`**
+  - True if the path is absolute (has both a root and, if applicable,
+- **`is_block_device()`**
+  - Whether this path is a block device.
+- **`is_char_device()`**
+  - Whether this path is a character device.
+- **`is_dir(follow_symlinks = True)`**
+  - Whether this path is a directory.
+- **`is_fifo()`**
+  - Whether this path is a FIFO.
+- **`is_file(follow_symlinks = True)`**
+  - Whether this path is a regular file (also True for symlinks pointing
+- **`is_junction()`**
+  - Whether this path is a junction.
+- **`is_mount()`**
+  - Check if this path is a mount point
+- **`is_relative_to(other)`**
+  - Return True if the path is relative to another path or False.
+- **`is_reserved()`**
+  - Return True if the path contains one of the special names reserved
+- **`is_socket()`**
+  - Whether this path is a socket.
+- **`is_symlink()`**
+  - Whether this path is a symbolic link.
+- **`iterdir()`**
+  - Yield path objects of the directory contents.
+- **`joinpath(pathsegments)`**
+  - Combine this path with one or several arguments, and return a
+- **`lchmod(mode)`**
+  - Like chmod(), except if the path points to a symlink, the symlink's
+- **`lstat()`**
+  - Like stat(), except if the path points to a symlink, the symlink's
+- **`match(path_pattern, case_sensitive = None)`**
+  - Return True if this path matches the given pattern. If the pattern is
+- **`mkdir(mode = 511, parents = False, exist_ok = False)`**
+  - Create a new directory at this given path.
+- **`move(target)`**
+  - Recursively move this file or directory tree to the given destination.
+- **`move_into(target_dir)`**
+  - Move this file or directory tree into the given existing directory.
+- **`open(mode = 'r', buffering = -1, encoding = None, errors = None, newline = None)`**
+  - Open the file pointed to by this path and return a file object, as
+- **`owner(follow_symlinks = True)`**
+  - Return the login name of the file owner.
+- **`read_bytes()`**
+  - Open the file in bytes mode, read it, and close the file.
+- **`read_text(encoding = None, errors = None, newline = None)`**
+  - Open the file in text mode, read it, and close the file.
+- **`readlink()`**
+  - Return the path to which the symbolic link points.
+- **`relative_to(other, walk_up = False)`**
+  - Return the relative path to another path identified by the passed
+- **`rename(target)`**
+  - Rename this path to the target path.
+- **`replace(target)`**
+  - Rename this path to the target path, overwriting if that path exists.
+- **`resolve(strict = False)`**
+  - Make the path absolute, resolving all symlinks on the way and also
+- **`rglob(pattern, case_sensitive = None, recurse_symlinks = False)`**
+  - Recursively yield all existing files (of any kind, including
+- **`rmdir()`**
+  - Remove this directory.  The directory must be empty.
+- **`samefile(other_path)`**
+  - Return whether other_path is the same or not as this file
+- **`stat(follow_symlinks = True)`**
+  - Return the result of the stat() system call on this path, like
+- **`symlink_to(target, target_is_directory = False)`**
+  - Make this path a symlink pointing to the target path.
+- **`touch(mode = 438, exist_ok = True)`**
+  - Create this file with the given access mode, if it doesn't exist.
+- **`unlink(missing_ok = False)`**
+  - Remove this file or link.
+- **`walk(top_down = True, on_error = None, follow_symlinks = False)`**
+  - Walk the directory tree from this directory, similar to os.walk().
+- **`with_name(name)`**
+  - Return a new path with the file name changed.
+- **`with_segments(pathsegments)`**
+  - Construct a new path object from any number of path-like objects.
+- **`with_stem(stem)`**
+  - Return a new path with the stem changed.
+- **`with_suffix(suffix)`**
+  - Return a new path with the file suffix changed.  If the path
+- **`write_bytes(data)`**
+  - Open the file in bytes mode, write to it, and close the file.
+- **`write_text(data, encoding = None, errors = None, newline = None)`**
+  - Open the file in text mode, write to it, and close the file.
+
+## Fonctions
+
+### `dataclass(cls = None, init = True, repr = True, eq = True, order = False, unsafe_hash = False, frozen = False, match_args = True, kw_only = False, slots = False, weakref_slot = False)`
+
+Add dunder methods based on the fields defined in the class.
+
+Examines PEP 526 __annotations__ to determine fields.
+
+If init is true, an __init__() method is added to the class. If repr
+is true, a __repr__() method is added. If order is true, rich
+comparison dunder methods are added. If unsafe_hash is true, a
+__hash__() method is added. If frozen is true, fields may not be
+assigned to after instance creation. If match_args is true, the
+__match_args__ tuple is added. If kw_only is true, then by default
+all fields are keyword-only. If slots is true, a new class with a
+__slots__ attribute is returned.
+
+### `field(default = <dataclasses._MISSING_TYPE object at 0x7f41f5162cf0>, default_factory = <dataclasses._MISSING_TYPE object at 0x7f41f5162cf0>, init = True, repr = True, hash = None, compare = True, metadata = None, kw_only = <dataclasses._MISSING_TYPE object at 0x7f41f5162cf0>, doc = None)`
+
+Return an object to identify dataclass fields.
+
+default is the default value of the field.  default_factory is a
+0-argument function called to initialize a field's value.  If init
+is true, the field will be a parameter to the class's __init__()
+function.  If repr is true, the field will be included in the
+object's repr().  If hash is true, the field will be included in the
+object's hash().  If compare is true, the field will be used in
+comparison functions.  metadata, if specified, must be a mapping
+which is stored but not otherwise examined by dataclass.  If kw_only
+is true, the field will become a keyword-only parameter to
+__init__().  doc is an optional docstring for this field.
+
+It is an error to specify both default and default_factory.

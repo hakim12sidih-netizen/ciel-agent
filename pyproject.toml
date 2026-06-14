@@ -35,6 +35,10 @@ dependencies = [
     "websockets>=12.0",
     "tomli-w>=1.0.0",
     "textual>=8.0.0",
+    "kuzu>=0.11.0",
+    "pyarrow>=18.0.0",
+    "grpcio>=1.81.0",
+    "protobuf>=5.0.0",
 ]
 
 [project.optional-dependencies]
@@ -70,6 +74,7 @@ markers = [
     "property: property-based tests using hypothesis",
     "integration: integration tests",
     "axiom: tests that verify axioms",
+    "benchmark: performance benchmarks",
 ]
 
 [tool.ruff]

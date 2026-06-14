@@ -60,6 +60,10 @@ class ConfigEngine:
                      "slack_token": "", "slack_enabled": False},
         "workflow": {"enabled": True, "loop_interval": 1.0,
                      "config_path": "~/.ciel/workflows.json"},
+        "plugins": {"enabled": True, "dirs": ["~/.ciel/plugins"],
+                     "auto_discover": True, "sandbox": True,
+                     "auto_approve_permissions": False,
+                     "max_plugins": 50},
     }
 
     def __init__(self, config_path: str | None = None):

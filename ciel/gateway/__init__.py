@@ -1,173 +1,166 @@
 """
-CIEL v1.0 — Gateway : serveur de passerelle multi-plateforme.
+CIEL v1.0 — Gateway : serveur de passerelle multi-plateforme avec daemon.
 
-Composant CIEL natif — passerelle de communication.
-Architecture de dispatch de méthodes :
-  - GatewayServer : serveur HTTP/WebSocket
-  - MethodRegistry : enregistrement et dispatch des méthodes
-  - Protocol : OpenAI-compatible, WebSocket JSON-RPC
+Composant CIEL natif — passerelle de communication unifiée :
+  - GatewayServer : serveur HTTP/WebSocket avec état persistant
+  - GatewayState : état SQLite des channels, sessions, métriques
+  - GatewayAuth : authentification device pairing + OAuth
+  - GatewayAPI : API REST pour le dashboard
+  - Router : routage des messages vers les agents/workspaces
+  - Daemon : service systemd/launchd persistant
 """
 from __future__ import annotations
 
-import json
+import asyncio
+import logging
 import time
-import uuid
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
-from ciel.channels import ChannelManager, Message
-from ciel.evolution.leader_network import LeaderNetwork
-from ciel.memory import MemoryManager
-from ciel.skills import SkillManager
-from ciel.plugins import get_registry as get_plugin_registry
+from ciel.gateway.state import GatewayState, ChannelState, SessionState
+from ciel.gateway.auth import GatewayAuth, Device
+from ciel.gateway.router import Router, Route, create_default_routes
+from ciel.gateway.daemon import (
+    install, uninstall, stop, is_running, get_pid, serve, write_pid, remove_pid,
+)
+from ciel.llmbridge.gateway.hdlm import ChannelParams, init_channels, init_llm
+from ciel.llmbridge.gateway.base import Message, MessageDirection
+from ciel.channels import ChannelManager, Message as ChannelMessage
+from ciel.swarm.gateway_bridge import SwarmGatewayBridge
 
-
-@dataclass(slots=True)
-class GatewayMethod:
-    name: str
-    handler: Callable[..., Any]
-    description: str = ""
-    scope: str = "public"  # public | admin | internal
+logger = logging.getLogger(__name__)
 
 
 class GatewayServer:
-    """Serveur de passerelle CIEL.
+    """Serveur de passerelle CIEL — point d'entrée unique.
 
-    Point d'entrée unique pour toutes les interactions :
-      - Messages des canaux (Telegram, Discord, etc.)
+    Consolide :
+      - Messages des canaux (Telegram, Discord, Slack, etc.)
       - Appels API REST
       - WebSocket JSON-RPC
       - CLI
+      - Essaim CIEL-NET fédéré
     """
 
-    def __init__(self):
-        self.methods: dict[str, GatewayMethod] = {}
-        self.channels = ChannelManager()
-        self.memory = MemoryManager()
-        self.skills = SkillManager()
-        self.network = LeaderNetwork()
+    def __init__(self, state: GatewayState | None = None,
+                 auth: GatewayAuth | None = None):
+        self.state = state or GatewayState()
+        self.auth = auth or GatewayAuth()
+        self.router = Router()
+        self.router.add_routes(create_default_routes())
+        self.router.register_handler("help", self._handle_help)
+        self.router.register_handler("status", self._handle_status)
+        self.router.register_handler("chat", self._handle_chat)
+        self.swarm_bridge = SwarmGatewayBridge()
+        self.swarm_bridge.bind_gateway(self)
+        self._adapters: dict[str, Any] = {}
+        self._api = None
         self._running = False
         self._start_time: float = 0.0
 
-        # Enregistre les méthodes de base
-        self._register_core_methods()
-
-    def _register_core_methods(self) -> None:
-        self.register_method("system.health", self._handle_health, "Health check")
-        self.register_method("system.info", self._handle_info, "System information")
-        self.register_method("memory.store", self._handle_memory_store, "Store memory")
-        self.register_method("memory.recall", self._handle_memory_recall, "Recall memory")
-        self.register_method("skills.list", self._handle_skills_list, "List skills")
-        self.register_method("skills.create", self._handle_skills_create, "Create skill")
-        self.register_method("channels.list", self._handle_channels_list, "List channels")
-        self.register_method("channels.send", self._handle_channels_send, "Send message")
-        self.register_method("providers.list", self._handle_providers_list, "List providers")
-
-    def register_method(self, name: str, handler: Callable,
-                        description: str = "", scope: str = "public") -> None:
-        self.methods[name] = GatewayMethod(
-            name=name, handler=handler, description=description, scope=scope
+    def _handle_help(self, text: str = "", platform: str = "", **kwargs: Any) -> str:
+        return (
+            "🤖 *CIEL Gateway*\n"
+            "Commandes disponibles :\n"
+            "  /help  — Cette aide\n"
+            "  /status — État du système\n"
+            "  /channels — Canaux connectés\n\n"
+            "Posez une question pour parler avec l'agent CIEL."
         )
+
+    def _handle_status(self, text: str = "", platform: str = "", **kwargs: Any) -> str:
+        st = self.state.status()
+        m = st["metrics"]
+        return (
+            f"*CIEL Gateway*\n"
+            f"Uptime : {m['uptime']:.0f}s\n"
+            f"Messages : {m['total_messages']}\n"
+            f"Canaux : {m['active_channels']}/{st['channels']}\n"
+            f"Sessions : {st['sessions']}"
+        )
+
+    def _handle_chat(self, text: str = "", platform: str = "",
+                     chat_id: str = "", **kwargs: Any) -> str | None:
+        from ciel.llmbridge.core import LLMBridgeEngine
+        engine = LLMBridgeEngine()
+        response = engine.chat(text, context={"platform": platform, "chat_id": chat_id})
+        return str(response) if response else None
 
     def start(self) -> bool:
         self._running = True
         self._start_time = time.time()
-        self.channels.connect_all()
-        self.network.emit("gateway.started", {"method_count": len(self.methods)})
+
+        channel_params = ChannelParams.from_env()
+        adapters = init_channels(channel_params)
+        self._adapters.update(adapters)
+
+        for name, adapter in adapters.items():
+            cid = self.state.register_channel(name)
+            adapter.on_message(lambda msg, c=cid: self._on_adapter_message(msg, c))
+            asyncio.create_task(self._start_adapter(name, adapter, cid))
+
+        from ciel.gateway.api import GatewayAPI
+        self._api = GatewayAPI(self.state, self.auth, self.router)
+        asyncio.create_task(self._start_api())
+
+        logger.info(f"Gateway started with {len(adapters)} channel(s)")
         return True
+
+    async def _start_adapter(self, name: str, adapter: Any, cid: str) -> None:
+        try:
+            await adapter.start()
+            self.state.update_channel(cid, connected=True)
+            logger.info(f"Channel {name} connected")
+        except Exception as e:
+            self.state.update_channel(cid, connected=False)
+            self.state.record_error(cid)
+            logger.error(f"Channel {name} failed: {e}")
+
+    async def _start_api(self) -> None:
+        if self._api:
+            try:
+                await self._api.start()
+            except Exception as e:
+                logger.error(f"API server failed: {e}")
 
     def stop(self) -> bool:
-        self.channels.disconnect_all()
-        self.memory.shutdown_all()
         self._running = False
-        self.network.emit("gateway.stopped", {"uptime_s": time.time() - self._start_time})
+        for name, adapter in self._adapters.items():
+            try:
+                asyncio.create_task(adapter.stop())
+            except Exception:
+                pass
+        if self._api:
+            asyncio.create_task(self._api.stop())
+        if self._start_time:
+            uptime = time.time() - self._start_time
+            logger.info(f"Gateway stopped after {uptime:.0f}s")
         return True
 
-    def dispatch(self, method: str, params: dict | None = None) -> Any:
-        gw_method = self.methods.get(method)
-        if not gw_method:
-            raise ValueError(f"Méthode inconnue: {method}")
-        return gw_method.handler(**(params or {}))
+    def _on_adapter_message(self, message: Message, channel_id: str) -> None:
+        self.state.record_message(channel_id, "incoming")
+        self.state.metrics.total_messages += 1
 
-    def handle_message(self, message: Message) -> str | None:
-        """Traite un message entrant et retourne une réponse."""
-        # Commandes système
-        if message.content.startswith("/"):
-            return self._handle_command(message)
+        target = self.router.route(
+            message.platform, message.text,
+            chat_id=message.chat_id,
+            sender_id=message.sender_id,
+        )
+        if target:
+            logger.info(f"Routed message to {target}")
 
-        # Dispatch vers l'agent (placeholder)
-        self.network.emit("gateway.message", {
-            "channel": message.channel,
-            "content": message.content[:80],
-        })
-        return None
-
-    def _handle_command(self, message: Message) -> str | None:
-        cmd = message.content[1:].split()[0].lower()
-        if cmd == "health":
-            return json.dumps(self._handle_health(), indent=2)
-        elif cmd == "memory":
-            return json.dumps(self.memory.statistics(), indent=2)
-        elif cmd == "skills":
-            return json.dumps(self.skills.statistics(), indent=2)
-        elif cmd == "help":
-            methods = "\n".join(f"  /{m}" for m in self.methods if m.startswith("system."))
-            return f"Méthodes disponibles:\n{methods}"
-        return None
-
-    def _handle_health(self, **kwargs: Any) -> dict:
+    def status(self) -> dict[str, Any]:
+        st = self.state.status()
         return {
-            "status": "healthy" if self._running else "stopped",
-            "uptime_s": round(time.time() - self._start_time, 2) if self._start_time else 0,
-            "methods": len(self.methods),
-            "channels": len(self.channels.channels),
-            "timestamp": time.time(),
-            "version": "1.0.0",
-        }
-
-    def _handle_info(self, **kwargs: Any) -> dict:
-        return {
-            "name": "CIEL Gateway",
-            "version": "1.0.0",
-            "edition": "Polyglot v1.0",
             "running": self._running,
-            "methods": list(self.methods.keys()),
+            "uptime_s": round(time.time() - self._start_time, 2) if self._start_time else 0,
+            "channels": {
+                name: {"running": getattr(adapter, '_running', False)}
+                for name, adapter in self._adapters.items()
+            },
+            "state": st,
         }
 
-    def _handle_memory_store(self, content: str = "", type_: str = "fact",
-                              source: str = "gateway", **kwargs: Any) -> dict:
-        from ciel.memory import create_memory
-        entry = create_memory(content, type_, source)
-        self.memory.store(entry)
-        return {"status": "stored", "id": entry.id}
 
-    def _handle_memory_recall(self, query: str = "", limit: int = 10, **kwargs: Any) -> dict:
-        results = self.memory.recall(query, limit)
-        return {"results": [e.to_dict() for e in results]}
-
-    def _handle_skills_list(self, category: str | None = None, **kwargs: Any) -> dict:
-        skills = self.skills.list(category=category)
-        return {"skills": [s.to_dict() for s in skills]}
-
-    def _handle_skills_create(self, name: str = "", description: str = "",
-                               body: str = "", **kwargs: Any) -> dict:
-        skill = self.skills.create(name, description, body)
-        return {"status": "created", "id": skill.id}
-
-    def _handle_channels_list(self, **kwargs: Any) -> dict:
-        return {"channels": self.channels.list_channels()}
-
-    def _handle_channels_send(self, channel_id: str = "", content: str = "", **kwargs: Any) -> dict:
-        success = self.channels.send(channel_id, content)
-        return {"status": "sent" if success else "failed"}
-
-    def _handle_providers_list(self, **kwargs: Any) -> dict:
-        from ciel.providers import get_registry
-        registry = get_registry()
-        return {"providers": [p.to_dict() for p in registry.list()]}
-
-
-# Instance globale
 _gateway: GatewayServer | None = None
 
 

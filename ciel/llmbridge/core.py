@@ -160,13 +160,19 @@ class LLMBridgeEngine:
         temperature: float = 0.7,
         max_tokens: int = 4096,
     ):
+        """Streaming chat — wrapped over chat_completion.
+
+        Yields LLMResponse chunks. Actuellement chaque provider
+        retourne une réponse complète (stream non implémenté au niveau HTTP).
+        La boucle yield un unique chunk pour compatibilité async for.
+        """
         provider = self.get_active_provider()
         if provider is None:
             raise RuntimeError("Aucun provider LLM actif.")
         llm_msgs = [LLMMessage(role=m.get("role", "user"), content=m.get("content", ""))
                      for m in messages]
-        async for chunk in provider.chat_completion(llm_msgs, temperature, max_tokens, stream=True):
-            yield chunk
+        result = await provider.chat_completion(llm_msgs, temperature, max_tokens, stream=True)
+        yield result
 
     # ── Sessions (état) ────────────────────────────────────
 

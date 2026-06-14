@@ -130,6 +130,11 @@ async def _execute_tool(tool_name: str, params: dict, brain=None) -> dict:
     try:
         if tool_name == "shell":
             cmd = params.get("cmd", "")
+            # Protection rudimentaire - devrait être liée à EthicsFilter
+            forbidden = ["rm -rf /", ":(){ :|:& };:", "dd if=/dev/zero"]
+            if any(f in cmd for f in forbidden):
+                 return {"tool": tool_name, "success": False, "output": "Commande interdite par protocole de sécurité."}
+            
             r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
             result["output"] = (r.stdout + r.stderr)[:2000]
             result["returncode"] = r.returncode

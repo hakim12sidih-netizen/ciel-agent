@@ -9,6 +9,7 @@ from __future__ import annotations
 __version__ = "1.0.0"
 __edition__ = "Cosmologique v∞.8"
 __phase__ = "8 (TRANSCENDANCE)"
+__all__ = ["__version__", "__edition__", "__phase__"]
 
 # Les 4 axiomes cosmiques (immuables, cryptographiquement signés)
 AXIOMS = ("α", "β", "γ", "δ")

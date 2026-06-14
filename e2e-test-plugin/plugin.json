@@ -1,0 +1,15 @@
+{
+  "name": "e2e-test-plugin",
+  "version": "0.1.0",
+  "description": "Plugin e2e-test-plugin for CIEL",
+  "author": "",
+  "entrypoint": "ciel_plugins.e2e-test-plugin",
+  "permissions": [
+    "core"
+  ],
+  "min_ciel_version": "1.0.0",
+  "hooks": {
+    "on_load": 0,
+    "on_enable": 0
+  }
+}
